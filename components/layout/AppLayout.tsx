@@ -15,7 +15,7 @@ const LayoutContent = ({ children }: { children: ReactNode }) => {
       <Backdrop />
       <div
         className={`flex-1 flex flex-col transition-all duration-300 ease-in-out
-          ${isExpanded || isHovered ? "lg:ml-[260px]" : "lg:ml-[80px]"}`}
+          ${isExpanded || isHovered ? "lg:ml-[240px]" : "lg:ml-[64px]"}`}
       >
         <AppHeader />
         <main className="flex-1 p-4 md:p-6 mx-auto w-full max-w-screen-2xl">

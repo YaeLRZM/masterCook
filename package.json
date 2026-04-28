@@ -9,21 +9,22 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "next": "16.2.3",
-    "react": "19.2.4",
-    "react-dom": "19.2.4",
+    "@hookform/resolvers": "^3.9.1",
     "apexcharts": "^4.1.0",
-    "react-apexcharts": "^1.7.0",
+    "clsx": "^2.1.1",
+    "decimal.js": "^10.4.3",
+    "flatpickr": "^4.6.13",
     "jspdf": "^2.5.2",
     "jspdf-autotable": "^3.8.4",
-    "decimal.js": "^10.4.3",
-    "react-hook-form": "^7.54.0",
-    "@hookform/resolvers": "^3.9.1",
-    "zod": "^3.24.1",
-    "clsx": "^2.1.1",
-    "tailwind-merge": "^3.0.1",
+    "lucide-react": "^1.11.0",
+    "next": "16.2.3",
+    "react": "19.2.4",
+    "react-apexcharts": "^1.7.0",
+    "react-dom": "19.2.4",
     "react-dropzone": "^14.3.5",
-    "flatpickr": "^4.6.13"
+    "react-hook-form": "^7.54.0",
+    "tailwind-merge": "^3.0.1",
+    "zod": "^3.24.1"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
