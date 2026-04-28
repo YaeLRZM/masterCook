@@ -22,7 +22,13 @@
 
 # misc
 .DS_Store
+Thumbs.db
 *.pem
+
+# claude
+.claude/
+CLAUDE.md
+AGENTS.md
 
 # debug
 npm-debug.log*
