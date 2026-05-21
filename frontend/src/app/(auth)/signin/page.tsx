@@ -14,11 +14,9 @@ export default function SignInPage() {
   const { setAuth } = useAuthStore();
 
   const [email, setEmail] = useState("");
-  const [password, setPassword] =
-    useState("");
+  const [password, setPassword] = useState("");
 
-  const [loading, setLoading] =
-    useState(false);
+  const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
     try {
@@ -29,33 +27,20 @@ export default function SignInPage() {
         password,
       });
 
-      setAuth(
-        response.user,
-        response.token
-      );
+      setAuth(response.user, response.token);
 
-      localStorage.setItem(
-        "token",
-        response.token
-      );
+      localStorage.setItem("token", response.token);
       document.cookie = `token=${response.token}; path=/`;
 
-      localStorage.setItem(
-        "user",
-        JSON.stringify(response.user)
-      );
+      localStorage.setItem("user", JSON.stringify(response.user));
 
       switch (response.user.role) {
         case Role.SUPER_ADMIN:
-          router.push(
-            "/super-admin/dashboard"
-          );
+          router.push("/super-admin/dashboard");
           break;
 
         case Role.ADMIN:
-          router.push(
-            "/admin/dashboard"
-          );
+          router.push("/admin/dashboard");
           break;
 
         case Role.CHEF:
@@ -63,9 +48,7 @@ export default function SignInPage() {
           break;
 
         case Role.AUXILIAR:
-          router.push(
-            "/auxiliar/recipes"
-          );
+          router.push("/auxiliar/recipes");
           break;
 
         case Role.SALES:
@@ -88,48 +71,35 @@ export default function SignInPage() {
 
       <div className="flex w-full items-center justify-center bg-white lg:w-1/2">
         <div className="w-full max-w-md p-8">
-          <div className="mb-10">
-            <h1 className="text-4xl font-bold tracking-tight">
-              MasterCook
-            </h1>
-
+          <div className="mb-6">
+            <img src="/logo.png" alt="MasterCook Logo" className="h-52 w-auto mb-4 mx-auto block" />
+            <h1 className="text-4xl font-bold tracking-tight">Iniciar sesión</h1>
             <p className="mt-2 text-gray-500">
-              Sistema profesional de gestión
-              gastronómica
+              Ingresa tus credenciales para acceder a mastercook.
             </p>
           </div>
 
           <div className="space-y-5">
             <div>
-              <label className="mb-2 block text-sm font-medium">
-                Email
-              </label>
+              <label className="mb-2 block text-sm font-medium">Email</label>
 
               <input
                 className="w-full rounded-xl border border-gray-200 bg-gray-50 p-3 outline-none transition focus:border-blue-500"
                 placeholder="admin@test.com"
                 value={email}
-                onChange={(e) =>
-                  setEmail(e.target.value)
-                }
+                onChange={(e) => setEmail(e.target.value)}
               />
             </div>
 
             <div>
-              <label className="mb-2 block text-sm font-medium">
-                Password
-              </label>
+              <label className="mb-2 block text-sm font-medium">Password</label>
 
               <input
                 type="password"
                 className="w-full rounded-xl border border-gray-200 bg-gray-50 p-3 outline-none transition focus:border-blue-500"
                 placeholder="••••••••"
                 value={password}
-                onChange={(e) =>
-                  setPassword(
-                    e.target.value
-                  )
-                }
+                onChange={(e) => setPassword(e.target.value)}
               />
             </div>
 
@@ -138,23 +108,20 @@ export default function SignInPage() {
               disabled={loading}
               className="w-full rounded-xl bg-blue-600 p-3 font-medium text-white transition hover:bg-blue-700"
             >
-              {loading
-                ? "Loading..."
-                : "Sign In"}
+              {loading ? "Loading..." : "Sign In"}
             </button>
-          </div>
-
-          <div className="mt-8 rounded-xl border border-gray-200 bg-gray-50 p-4">
-            <p className="text-sm text-gray-600">
-              Demo:
+            <p className="mt-2 text-gray-500">
+              No tienes una cuenta?{" "}
+              <a href="/signup" className="text-blue-600 hover:underline">
+                Regístrate
+              </a>
             </p>
 
-            <p className="mt-2 text-sm">
-              admin@test.com
-            </p>
-
-            <p className="text-sm">
-              123456
+            <p className="mt-2 text-gray-500" >
+              Terminos y condiciones aplican. Al iniciar sesión, aceptas nuestra{" "}
+              <a href="/terms" className="text-blue-600 hover:underline">
+                Política de Privacidad
+              </a>
             </p>
           </div>
         </div>
@@ -162,33 +129,31 @@ export default function SignInPage() {
 
       {/* RIGHT SIDE */}
 
-      <div className="hidden lg:flex lg:w-1/2 flex-col items-center justify-center bg-gradient-to-br from-blue-700 to-indigo-900 p-12 text-white">
-        <div className="max-w-md">
-          <div className="mb-6 text-6xl">
-            👨‍🍳
-          </div>
-
+      <div
+        className="hidden lg:flex lg:w-1/2 flex-col items-center justify-center p-12 text-white relative overflow-hidden"
+        style={{
+          backgroundImage:
+            "url('https://images.unsplash.com/photo-1577219491135-ce391730fb2c?auto=format&fit=crop&q=80&w=1200')",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+        }}
+      >
+        <div className="absolute inset-0 bg-black/50" />
+        <div className="relative z-10 max-w-md">
           <h2 className="text-5xl font-bold leading-tight">
             Control total de tu cocina
           </h2>
 
-          <p className="mt-6 text-lg text-blue-100">
-            Administra recetas,
-            ingredientes, eventos,
-            costos y personal desde un
-            solo lugar.
+          <p className="mt-6 text-lg text-white/80">
+            Administra recetas, ingredientes, eventos, costos y personal desde
+            un solo lugar.
           </p>
 
           <div className="mt-10 flex flex-wrap gap-3">
-            {[
-              "Recetas",
-              "Eventos",
-              "Costos",
-              "Auditoría",
-            ].map((item) => (
+            {["Recetas", "Eventos", "Costos", "Personal"].map((item) => (
               <span
                 key={item}
-                className="rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm backdrop-blur"
+                className="rounded-full border border-white/30 bg-white/15 px-4 py-2 text-sm backdrop-blur"
               >
                 {item}
               </span>
