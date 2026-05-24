@@ -48,6 +48,7 @@ type Company = {
   email: string;
   phone?: string;
   address?: string;
+  rfc?: string;
   is_active: boolean;
 };
 
@@ -70,6 +71,7 @@ export default function CompaniesPage() {
       email: "",
       phone: "",
       address: "",
+      rfc: "",
     });
 
   const loadCompanies = async () => {
@@ -94,12 +96,13 @@ export default function CompaniesPage() {
         email: "",
         phone: "",
         address: "",
+        rfc: "",
       });
 
       setOpen(false);
-    } catch (error) {
-      alert("Error creating company");
+    } catch (error: any) {
       console.error(error);
+      alert(extractApiError(error, "Error creating company"));
     } finally {
       setLoading(false);
     }
@@ -111,11 +114,20 @@ export default function CompaniesPage() {
     try {
       await toggleCompanyStatus(companyId);
       await loadCompanies();
-    } catch (error) {
-      alert("Error updating company status");
+    } catch (error: any) {
       console.error(error);
+      alert(extractApiError(error, "Error updating company status"));
     }
   };
+
+  function extractApiError(error: any, fallback: string): string {
+    const detail = error?.response?.data?.detail ?? error?.message ?? fallback;
+    if (typeof detail === "string") return detail;
+    if (Array.isArray(detail)) {
+      return detail.map((d: any) => `${d.loc?.join(".")}: ${d.msg}`).join("\n");
+    }
+    return JSON.stringify(detail);
+  }
 
   const filteredCompanies =
     companies.filter((company) =>
@@ -195,6 +207,17 @@ export default function CompaniesPage() {
                 }
               />
 
+              <Input
+                placeholder="RFC"
+                value={form.rfc}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    rfc: e.target.value.toUpperCase(),
+                  })
+                }
+              />
+
               <Button
                 className="w-full"
                 onClick={handleCreateCompany}
@@ -248,6 +271,10 @@ export default function CompaniesPage() {
                 </TableHead>
 
                 <TableHead>
+                  RFC
+                </TableHead>
+
+                <TableHead>
                   Status
                 </TableHead>
 
@@ -277,6 +304,10 @@ export default function CompaniesPage() {
 
                     <TableCell>
                       {company.address || "—"}
+                    </TableCell>
+
+                    <TableCell>
+                      {company.rfc || "—"}
                     </TableCell>
 
                     <TableCell>
@@ -319,7 +350,7 @@ export default function CompaniesPage() {
               {filteredCompanies.length === 0 && (
                 <TableRow>
                   <TableCell
-                    colSpan={6}
+                    colSpan={7}
                     className="py-8 text-center text-gray-500"
                   >
                     No companies found.

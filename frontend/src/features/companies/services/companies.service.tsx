@@ -1,53 +1,94 @@
-import axios from "axios";
+import { api } from "@/lib/axios";
 
-const API_URL = "http://127.0.0.1:8000";
+// --- Tipos crudos del backend (FastAPI) ----------------------------------
 
-function getToken() {
-  return localStorage.getItem("token");
+interface BackendEmpresa {
+  id: number;
+  nombre: string;
+  email: string;
+  telefono: string | null;
+  direccion: string | null;
+  rfc: string | null;
+  estatus: string;
+  activa: boolean;
+  creado_en?: string | null;
 }
 
-export async function getCompanies() {
-  const response = await axios.get(
-    `${API_URL}/companies/`,
-    {
-      headers: {
-        Authorization: `Bearer ${getToken()}`,
-      },
-    }
-  );
+// --- Tipo normalizado que consume la UI ----------------------------------
 
-  return response.data;
-}
-
-export async function createCompany(data: {
+export interface Company {
+  id: number;
   name: string;
   email: string;
   phone?: string;
   address?: string;
-}) {
-  const response = await axios.post(
-    `${API_URL}/companies/`,
-    data,
-    {
-      headers: {
-        Authorization: `Bearer ${getToken()}`,
-      },
-    }
-  );
-
-  return response.data;
+  rfc?: string;
+  is_active: boolean;
+  status: string;
 }
 
-export async function toggleCompanyStatus(id: number) {
-  const response = await axios.patch(
-    `${API_URL}/companies/${id}/toggle-status`,
-    {},
-    {
-      headers: {
-        Authorization: `Bearer ${getToken()}`,
-      },
-    }
-  );
+function adapt(e: BackendEmpresa): Company {
+  return {
+    id: e.id,
+    name: e.nombre,
+    email: e.email,
+    phone: e.telefono ?? undefined,
+    address: e.direccion ?? undefined,
+    rfc: e.rfc ?? undefined,
+    is_active: e.activa,
+    status: e.estatus,
+  };
+}
 
-  return response.data;
+// --- Endpoints ------------------------------------------------------------
+
+export async function getCompanies(): Promise<Company[]> {
+  const { data } = await api.get<BackendEmpresa[]>("/empresas/");
+  return data.map(adapt);
+}
+
+export async function createCompany(payload: {
+  name: string;
+  email: string;
+  phone?: string;
+  address?: string;
+  rfc?: string;
+}): Promise<Company> {
+  const { data } = await api.post<BackendEmpresa>("/empresas/", {
+    nombre: payload.name,
+    email: payload.email,
+    telefono: payload.phone || undefined,
+    direccion: payload.address || undefined,
+    rfc: payload.rfc || undefined,
+  });
+  return adapt(data);
+}
+
+export async function toggleCompanyStatus(id: number): Promise<Company> {
+  const { data } = await api.patch<BackendEmpresa>(
+    `/empresas/${id}/toggle-status`
+  );
+  return adapt(data);
+}
+
+// --- Bootstrap del ADMIN de una empresa (solo SUPER_ADMIN) ---------------
+
+export async function createCompanyAdmin(
+  empresaId: number,
+  payload: {
+    nombre_login: string;
+    email: string;
+    password: string;
+    nombre: string;
+    apellido_paterno?: string;
+    apellido_materno?: string;
+    telefono?: string;
+    cargo?: string;
+  }
+) {
+  const { data } = await api.post(
+    `/empresas/${empresaId}/admin`,
+    payload
+  );
+  return data;
 }

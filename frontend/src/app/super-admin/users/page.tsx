@@ -75,6 +75,9 @@ export default function UsersPage() {
 
   const [form, setForm] = useState({
     name: "",
+    apellido_paterno: "",
+    apellido_materno: "",
+    telefono: "",
     email: "",
     password: "",
     company_id: "",
@@ -97,6 +100,9 @@ export default function UsersPage() {
     try {
       await createAdmin({
         name: form.name,
+        apellido_paterno: form.apellido_paterno,
+        apellido_materno: form.apellido_materno,
+        telefono: form.telefono,
         email: form.email,
         password: form.password,
         company_id: Number(form.company_id),
@@ -106,15 +112,28 @@ export default function UsersPage() {
 
       setForm({
         name: "",
+        apellido_paterno: "",
+        apellido_materno: "",
+        telefono: "",
         email: "",
         password: "",
         company_id: "",
       });
 
       setOpen(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      alert("Error creating admin");
+      const detail =
+        error?.response?.data?.detail ??
+        error?.message ??
+        "Error creating admin";
+      const message =
+        typeof detail === "string"
+          ? detail
+          : Array.isArray(detail)
+          ? detail.map((d: any) => `${d.loc?.join(".")}: ${d.msg}`).join("\n")
+          : JSON.stringify(detail);
+      alert(message);
     }
   };
 
@@ -156,12 +175,47 @@ export default function UsersPage() {
 
             <div className="space-y-4">
               <Input
-                placeholder="Full name"
+                placeholder="Nombre"
                 value={form.name}
                 onChange={(e) =>
                   setForm({
                     ...form,
                     name: e.target.value,
+                  })
+                }
+              />
+
+              <div className="grid grid-cols-2 gap-3">
+                <Input
+                  placeholder="Apellido paterno"
+                  value={form.apellido_paterno}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      apellido_paterno: e.target.value,
+                    })
+                  }
+                />
+
+                <Input
+                  placeholder="Apellido materno"
+                  value={form.apellido_materno}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      apellido_materno: e.target.value,
+                    })
+                  }
+                />
+              </div>
+
+              <Input
+                placeholder="Teléfono"
+                value={form.telefono}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    telefono: e.target.value,
                   })
                 }
               />
@@ -255,6 +309,10 @@ export default function UsersPage() {
                 </TableHead>
 
                 <TableHead>
+                  Teléfono
+                </TableHead>
+
+                <TableHead>
                   Company
                 </TableHead>
 
@@ -277,6 +335,10 @@ export default function UsersPage() {
 
                   <TableCell>
                     {user.email}
+                  </TableCell>
+
+                  <TableCell>
+                    {user.phone || "—"}
                   </TableCell>
 
                   <TableCell>
@@ -310,7 +372,7 @@ export default function UsersPage() {
               {filteredUsers.length === 0 && (
                 <TableRow>
                   <TableCell
-                    colSpan={5}
+                    colSpan={6}
                     className="py-8 text-center text-gray-500"
                   >
                     No admins found.
