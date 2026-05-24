@@ -1,136 +1,86 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+from sqlalchemy import select
 
-from app.database.database import SessionLocal
+from app.database.database import get_db
 
-from app.models.user import User
+from app.models.usuario import Usuario
+from app.models.rol import Rol
+from app.models.usuario_rol import UsuarioRol
 
-from app.schemas.user_schema import (
-    UserCreate,
-    UserLogin
+from app.schemas.usuario_schema import (
+    UsuarioCrear,
+    UsuarioLogin,
+    UsuarioSalida,
+    TokenSalida,
 )
 
 from app.core.security import (
-    hash_password,
-    verify_password,
-    create_access_token
-)
-
-router = APIRouter(
-    prefix="/auth",
-    tags=["Auth"]
+    hashear_password,
+    verificar_password,
+    crear_access_token,
 )
 
 
-# =========================
-# DATABASE SESSION
-# =========================
-
-def get_db():
-    db = SessionLocal()
-
-    try:
-        yield db
-
-    finally:
-        db.close()
+router = APIRouter(prefix="/auth", tags=["Autenticacion"])
 
 
-# =========================
-# REGISTER
-# =========================
+@router.post("/register", response_model=UsuarioSalida)
+def registrar(payload: UsuarioCrear, db: Session = Depends(get_db)):
+    duplicado = db.execute(
+        select(Usuario).where(Usuario.email == payload.email)
+    ).scalar_one_or_none()
+    if duplicado:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email ya registrado",
+        )
 
-@router.post("/register")
-
-def register(user: UserCreate):
-
-    db: Session = SessionLocal()
-
-    # HASH PASSWORD
-
-    hashed_password = hash_password(
-        user.password
+    nuevo = Usuario(
+        nombre_login=payload.nombre_login,
+        email=payload.email,
+        password_hash=hashear_password(payload.password),
+        empresa_id=payload.empresa_id,
+        persona_id=payload.persona_id,
     )
-
-    # CREATE USER
-
-    new_user = User(
-        name=user.name,
-        email=user.email,
-        password=hashed_password,
-        role=user.role,
-        company_id=user.company_id
-    )
-
-    db.add(new_user)
-
+    db.add(nuevo)
     db.commit()
-
-    db.refresh(new_user)
-
-    return {
-        "message": "User created successfully",
-        "user": {
-            "id": new_user.id,
-            "name": new_user.name,
-            "email": new_user.email,
-            "role": new_user.role,
-            "company_id": new_user.company_id
-        }
-    }
+    db.refresh(nuevo)
+    return nuevo
 
 
-# =========================
-# LOGIN
-# =========================
+@router.post("/login", response_model=TokenSalida)
+def login(payload: UsuarioLogin, db: Session = Depends(get_db)):
+    usuario = db.execute(
+        select(Usuario).where(Usuario.email == payload.email)
+    ).scalar_one_or_none()
 
-@router.post("/login")
+    if usuario is None or not verificar_password(payload.password, usuario.password_hash):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Credenciales invalidas",
+        )
+    if not usuario.activo:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Usuario inactivo",
+        )
 
-def login(data: UserLogin):
+    nombres_roles = db.execute(
+        select(Rol.nombre)
+        .join(UsuarioRol, UsuarioRol.rol_id == Rol.id)
+        .where(UsuarioRol.usuario_id == usuario.id)
+    ).scalars().all()
 
-    db: Session = SessionLocal()
-
-    # FIND USER
-
-    user = db.query(User).filter(
-        User.email == data.email
-    ).first()
-
-    # VALIDATE USER
-
-    if not user:
-        return {
-            "error": "Invalid credentials"
-        }
-
-    # VALIDATE PASSWORD
-
-    valid_password = verify_password(
-        data.password,
-        user.password
+    token = crear_access_token(
+        sub=usuario.email,
+        empresa_id=usuario.empresa_id,
+        usuario_id=usuario.id,
+        roles=list(nombres_roles),
     )
 
-    if not valid_password:
-        return {
-            "error": "Invalid credentials"
-        }
-
-    # CREATE JWT TOKEN
-
-    token = create_access_token({
-        "sub": user.email,
-        "role": user.role
-    })
-
-    # RESPONSE
-
-    return {
-    "token": token,
-    "user": {
-        "id": user.id,
-        "name": user.name,
-        "email": user.email,
-        "role": user.role,
-        "company_id": user.company_id
-    }
-}
+    return TokenSalida(
+        access_token=token,
+        usuario=UsuarioSalida.model_validate(usuario),
+        roles=list(nombres_roles),
+    )
