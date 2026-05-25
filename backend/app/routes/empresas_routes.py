@@ -66,7 +66,6 @@ def listar_administradores(
         .outerjoin(Persona, Persona.id == Usuario.persona_id)
         .where(
             Rol.nombre == ROL_ADMIN,
-            Rol.empresa_id == Usuario.empresa_id,
             Rol.nombre != ROL_SUPER_ADMIN,
         )
     )
@@ -207,21 +206,15 @@ def crear_admin_de_empresa(
             detail="Email ya registrado",
         )
 
-    # 1. Rol ADMIN (idempotente)
+    # 1. Rol ADMIN (obtener el rol global)
     rol_admin = db.execute(
-        select(Rol).where(
-            Rol.empresa_id == empresa.id,
-            Rol.nombre == ROL_ADMIN,
-        )
+        select(Rol).where(Rol.nombre == ROL_ADMIN)
     ).scalar_one_or_none()
     if rol_admin is None:
-        rol_admin = Rol(
-            empresa_id=empresa.id,
-            nombre=ROL_ADMIN,
-            descripcion="Administrador / Representante de la empresa",
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Rol ADMIN no existe en el sistema",
         )
-        db.add(rol_admin)
-        db.flush()
 
     # 2. Persona
     persona = Persona(

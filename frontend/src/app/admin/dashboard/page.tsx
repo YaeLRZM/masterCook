@@ -1,32 +1,9 @@
 "use client";
 
 import PageHeader from "@/components/common/PageHeader";
-
-import {
-  dashboardStats,
-  revenueData,
-  recentActivities,
-} from "@/mocks/admin-dashboard.mock";
-
-import {
-  Card,
-  CardContent,
-} from "@/components/ui/card";
-
-import {
-  DollarSign,
-  Users,
-  CalendarDays,
-  FileText,
-} from "lucide-react";
-
-import {
-  ResponsiveContainer,
-  AreaChart,
-  Area,
-  XAxis,
-  Tooltip,
-} from "recharts";
+import { Card, CardContent } from "@/components/ui/card";
+import { Users, UserCheck } from "lucide-react";
+import { useEffect, useState } from "react";
 
 function StatCard({
   title,
@@ -34,26 +11,18 @@ function StatCard({
   icon: Icon,
 }: {
   title: string;
-
   value: string | number;
-
   icon: React.ElementType;
 }) {
   return (
     <Card className="rounded-3xl border-0 shadow-sm">
       <CardContent className="flex items-center justify-between p-6">
         <div>
-          <p className="text-sm text-gray-500">
-            {title}
-          </p>
-
-          <h3 className="mt-2 text-3xl font-bold">
-            {value}
-          </h3>
+          <p className="text-sm text-gray-500">{title}</p>
+          <h3 className="mt-2 text-3xl font-bold">{value}</h3>
         </div>
-
-        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-orange-100">
-          <Icon className="h-7 w-7 text-orange-600" />
+        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-100">
+          <Icon className="h-7 w-7 text-blue-600" />
         </div>
       </CardContent>
     </Card>
@@ -61,152 +30,58 @@ function StatCard({
 }
 
 export default function AdminDashboardPage() {
+  const [staffCount, setStaffCount] = useState(0);
+  const [activeCount, setActiveCount] = useState(0);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const { getPersonal } = await import("@/features/personal/services/personal.service");
+        const staff = await getPersonal();
+        setStaffCount(staff.length);
+        setActiveCount(staff.filter((s) => s.status === "ACTIVE").length);
+      } catch (error) {
+        console.error("Error cargando dashboard:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, []);
+
   return (
     <div className="space-y-8">
-      {/* HEADER */}
-
       <PageHeader
         title="Dashboard"
-        description="Business overview and analytics"
+        description="Resumen de tu empresa"
       />
 
-      {/* STATS */}
-
-      <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-6 md:grid-cols-2">
         <StatCard
-          title="Revenue"
-          value={`$${dashboardStats.revenue}`}
-          icon={DollarSign}
-        />
-
-        <StatCard
-          title="Employees"
-          value={dashboardStats.employees}
+          title="Personal Total"
+          value={loading ? "—" : staffCount}
           icon={Users}
         />
 
         <StatCard
-          title="Events"
-          value={dashboardStats.events}
-          icon={CalendarDays}
-        />
-
-        <StatCard
-          title="Quotations"
-          value={dashboardStats.quotations}
-          icon={FileText}
+          title="Personal Activo"
+          value={loading ? "—" : activeCount}
+          icon={UserCheck}
         />
       </div>
 
-      {/* CHART + ACTIVITY */}
-
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* CHART */}
-
-        <Card className="col-span-2 rounded-3xl border-0 shadow-sm">
-          <CardContent className="p-6">
-            <div className="mb-6">
-              <h2 className="text-lg font-semibold">
-                Revenue Overview
-              </h2>
-
-              <p className="text-sm text-gray-500">
-                Monthly business performance
-              </p>
-            </div>
-
-            <div className="h-[320px]">
-              <ResponsiveContainer
-                width="100%"
-                height="100%"
-              >
-                <AreaChart
-                  data={revenueData}
-                >
-                  <defs>
-                    <linearGradient
-                      id="colorRevenue"
-                      x1="0"
-                      y1="0"
-                      x2="0"
-                      y2="1"
-                    >
-                      <stop
-                        offset="5%"
-                        stopColor="#ea580c"
-                        stopOpacity={0.4}
-                      />
-
-                      <stop
-                        offset="95%"
-                        stopColor="#ea580c"
-                        stopOpacity={0}
-                      />
-                    </linearGradient>
-                  </defs>
-
-                  <XAxis
-                    dataKey="month"
-                  />
-
-                  <Tooltip />
-
-                  <Area
-                    type="monotone"
-                    dataKey="revenue"
-                    stroke="#ea580c"
-                    fillOpacity={1}
-                    fill="url(#colorRevenue)"
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* ACTIVITY */}
-
-        <Card className="rounded-3xl border-0 shadow-sm">
-          <CardContent className="p-6">
-            <div className="mb-6">
-              <h2 className="text-lg font-semibold">
-                Recent Activity
-              </h2>
-
-              <p className="text-sm text-gray-500">
-                Latest system actions
-              </p>
-            </div>
-
-            <div className="space-y-5">
-              {recentActivities.map(
-                (activity) => (
-                  <div
-                    key={activity.id}
-                    className="flex items-start gap-3"
-                  >
-                    <div className="mt-1 h-2.5 w-2.5 rounded-full bg-orange-500" />
-
-                    <div>
-                      <p className="text-sm font-medium">
-                        {activity.action}
-                      </p>
-
-                      <p className="text-xs text-gray-500">
-                        {activity.user}
-                      </p>
-
-                      <p className="mt-1 text-xs text-gray-400">
-                        {activity.time}
-                      </p>
-                    </div>
-                  </div>
-                )
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      <Card className="rounded-3xl border-0 shadow-sm">
+        <CardContent className="p-6">
+          <h2 className="text-lg font-semibold">
+            Información de la Empresa
+          </h2>
+          <p className="mt-4 text-sm text-gray-600">
+            Aquí se mostrarán los datos de tu empresa.
+          </p>
+        </CardContent>
+      </Card>
     </div>
   );
 }

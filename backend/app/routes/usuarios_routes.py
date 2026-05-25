@@ -43,23 +43,20 @@ router = APIRouter(prefix="/usuarios", tags=["Personal"])
 solo_admin = requiere_roles(["ADMIN"])
 
 
-def _rol_asignable_o_404(db: Session, rol_id: int, empresa_id: int) -> Rol:
+def _rol_asignable_o_404(db: Session, rol_id: int) -> Rol:
     """
     Devuelve el rol si:
-      - pertenece a la empresa actual,
+      - existe en el sistema global,
       - no es un nombre reservado (ADMIN / SUPER_ADMIN).
     En cualquier otro caso, lanza HTTP apropiado.
     """
     rol = db.execute(
-        select(Rol).where(
-            Rol.id == rol_id,
-            Rol.empresa_id == empresa_id,
-        )
+        select(Rol).where(Rol.id == rol_id)
     ).scalar_one_or_none()
     if rol is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Rol no encontrado en tu empresa",
+            detail="Rol no encontrado",
         )
     if rol.nombre in ROLES_RESERVADOS:
         raise HTTPException(
@@ -121,7 +118,7 @@ def crear_personal(
 
     # Pre-valida que todos los roles a asignar sean validos.
     roles_a_asignar = [
-        _rol_asignable_o_404(db, rol_id, empresa_id)
+        _rol_asignable_o_404(db, rol_id)
         for rol_id in payload.roles_ids
     ]
 
@@ -211,7 +208,7 @@ def asignar_rol(
     _=Depends(solo_admin),
 ):
     usuario = obtener_objeto_del_tenant(db, Usuario, usuario_id, empresa_id)
-    rol = _rol_asignable_o_404(db, rol_id, empresa_id)
+    rol = _rol_asignable_o_404(db, rol_id)
 
     existente = db.execute(
         select(UsuarioRol).where(
@@ -239,7 +236,7 @@ def quitar_rol(
     _=Depends(solo_admin),
 ):
     usuario = obtener_objeto_del_tenant(db, Usuario, usuario_id, empresa_id)
-    rol = _rol_asignable_o_404(db, rol_id, empresa_id)
+    rol = _rol_asignable_o_404(db, rol_id)
 
     asignacion = db.execute(
         select(UsuarioRol).where(
@@ -260,13 +257,11 @@ def quitar_rol(
 @router.get("/roles/", response_model=List[RolSalida])
 def listar_roles_asignables(
     db: Session = Depends(get_db),
-    empresa_id: int = Depends(obtener_empresa_actual_id),
     _=Depends(solo_admin),
 ):
-    """Lista los roles de la empresa que el ADMIN puede asignar al personal."""
+    """Lista los roles globales que el ADMIN puede asignar al personal."""
     return db.execute(
         select(Rol).where(
-            Rol.empresa_id == empresa_id,
             Rol.nombre.notin_(ROLES_RESERVADOS),
         )
     ).scalars().all()
@@ -277,32 +272,27 @@ def listar_roles_asignables(
     response_model=RolSalida,
     status_code=status.HTTP_201_CREATED,
 )
-def crear_rol_personalizado(
+def crear_rol(
     payload: RolCrear,
     db: Session = Depends(get_db),
-    empresa_id: int = Depends(obtener_empresa_actual_id),
-    _=Depends(solo_admin),
+    _=Depends(requiere_roles(["SUPER_ADMIN"])),
 ):
-    """Crea un rol custom en la empresa (ej. 'Sous Chef', 'Mesero Senior')."""
+    """Crea un rol global en el sistema (solo SUPER_ADMIN)."""
     if payload.nombre.upper() in ROLES_RESERVADOS:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail=f"El nombre '{payload.nombre}' esta reservado",
         )
     duplicado = db.execute(
-        select(Rol).where(
-            Rol.empresa_id == empresa_id,
-            Rol.nombre == payload.nombre,
-        )
+        select(Rol).where(Rol.nombre == payload.nombre)
     ).scalar_one_or_none()
     if duplicado:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Ya existe un rol con ese nombre en tu empresa",
+            detail="Ya existe un rol con ese nombre en el sistema",
         )
 
     rol = Rol(
-        empresa_id=empresa_id,
         nombre=payload.nombre,
         descripcion=payload.descripcion,
     )

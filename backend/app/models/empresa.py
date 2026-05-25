@@ -24,7 +24,6 @@ class Empresa(Base):
     actualizado_en = Column(DateTime(timezone=True), onupdate=func.now())
 
     usuarios = relationship("Usuario", back_populates="empresa")
-    roles = relationship("Rol", back_populates="empresa")
     clientes = relationship("Cliente", back_populates="empresa")
     ingredientes = relationship("Ingrediente", back_populates="empresa")
     recetas = relationship("Receta", back_populates="empresa")

@@ -7,8 +7,6 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   Users,
-  ShieldCheck,
-  BarChart3,
 } from "lucide-react";
 
 const links = [
@@ -19,21 +17,9 @@ const links = [
   },
 
   {
-    label: "Users",
-    href: "/admin/users",
+    label: "Personal",
+    href: "/admin/personal",
     icon: Users,
-  },
-
-  {
-    label: "Audit",
-    href: "/admin/audit",
-    icon: ShieldCheck,
-  },
-
-  {
-    label: "Reports",
-    href: "/admin/reports",
-    icon: BarChart3,
   },
 ];
 
@@ -41,19 +27,15 @@ export default function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="hidden w-72 border-r border-gray-200 bg-white lg:flex lg:flex-col">
+    <aside className="hidden w-[270px] border-r border-gray-200 bg-white lg:flex lg:flex-col">
       {/* LOGO */}
 
-      <div className="flex h-16 items-center border-b border-gray-200 px-6">
-        <div>
-          <h1 className="text-xl font-bold tracking-tight">
-            MasterCook
-          </h1>
+      <div className="border-b border-gray-100 px-6 py-8">
+        <img src="/logoSide.png" alt="MasterCook Logo" className="h-40 w-auto mb-6 mx-auto block" />
 
-          <p className="text-xs text-gray-500">
-            Company Panel
-          </p>
-        </div>
+        <p className="mt-4 text-center text-xl font-semibold text-gray-700">
+          Panel de Administrador
+        </p>
       </div>
 
       {/* NAV */}
@@ -71,7 +53,7 @@ export default function Sidebar() {
               href={link.href}
               className={`flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium transition-all ${
                 active
-                  ? "bg-orange-500 text-white shadow-sm"
+                  ? "bg-blue-600 text-white shadow-lg shadow-blue-500/20"
                   : "text-gray-600 hover:bg-gray-100"
               }`}
             >

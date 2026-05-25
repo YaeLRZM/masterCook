@@ -135,7 +135,6 @@ def requiere_roles(roles_permitidos: List[str]):
             .join(UsuarioRol, UsuarioRol.rol_id == Rol.id)
             .where(
                 UsuarioRol.usuario_id == usuario.id,
-                Rol.empresa_id == usuario.empresa_id,
             )
         ).scalars().all()
 

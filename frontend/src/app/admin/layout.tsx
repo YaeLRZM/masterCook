@@ -1,5 +1,5 @@
 import ClientAuthGuard from "@/guards/ClientAuthGuard";
-import SuperAdminAppLayout from "@/layouts/super-admin/Layout";
+import AdminLayout from "@/layouts/admin/Layout";
 
 export default function Layout({
   children,
@@ -8,9 +8,9 @@ export default function Layout({
 }) {
   return (
     <ClientAuthGuard>
-      <SuperAdminAppLayout>
+      <AdminLayout>
         {children}
-      </SuperAdminAppLayout>
+      </AdminLayout>
     </ClientAuthGuard>
   );
 }
