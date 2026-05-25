@@ -7,6 +7,12 @@ interface BackendPersonal {
   estatus: string;
   activo: boolean;
   roles: string[];
+  persona?: {
+    nombre?: string;
+    apellido_paterno?: string;
+    apellido_materno?: string;
+    telefono?: string;
+  };
 }
 
 export interface Personal {
@@ -15,15 +21,25 @@ export interface Personal {
   email: string;
   status: "ACTIVE" | "INACTIVE";
   roles: string[];
+  fullName?: string;
+  phone?: string;
 }
 
 function adapt(row: BackendPersonal): Personal {
+  const fullName = row.persona
+    ? [row.persona.nombre, row.persona.apellido_paterno, row.persona.apellido_materno]
+        .filter(Boolean)
+        .join(" ")
+    : undefined;
+
   return {
     id: row.id,
     name: row.nombre_login,
     email: row.email,
     status: row.activo ? "ACTIVE" : "INACTIVE",
     roles: row.roles || [],
+    fullName: fullName || row.nombre_login,
+    phone: row.persona?.telefono,
   };
 }
 

@@ -9,8 +9,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Plus, Search } from "lucide-react";
-import { getPersonal, createPersonal, disablePersonal } from "@/features/personal/services/personal.service";
+import { getPersonal, createPersonal, disablePersonal, getAssignableRoles } from "@/features/personal/services/personal.service";
 import { useAuthStore } from "@/features/auth/store/auth.store";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 function roleColor(role: string) {
   switch (role) {
@@ -31,10 +32,16 @@ export default function PersonalPage() {
   const [staff, setStaff] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
+  const [roles, setRoles] = useState<any[]>([]);
   const [form, setForm] = useState({
     nombre_login: "",
     email: "",
     password: "",
+    nombre: "",
+    apellido_paterno: "",
+    apellido_materno: "",
+    telefono: "",
+    roles_ids: [] as number[],
   });
 
   const loadStaff = async () => {
@@ -49,8 +56,18 @@ export default function PersonalPage() {
     }
   };
 
+  const loadRoles = async () => {
+    try {
+      const data = await getAssignableRoles();
+      setRoles(data);
+    } catch (error) {
+      console.error("Error cargando roles:", error);
+    }
+  };
+
   useEffect(() => {
     loadStaff();
+    loadRoles();
   }, []);
 
   const handleCreateStaff = async () => {
@@ -59,9 +76,23 @@ export default function PersonalPage() {
         nombre_login: form.nombre_login,
         email: form.email,
         password: form.password,
+        nombre: form.nombre || form.nombre_login,
+        apellido_paterno: form.apellido_paterno,
+        apellido_materno: form.apellido_materno,
+        telefono: form.telefono,
+        roles_ids: form.roles_ids,
       });
       setOpen(false);
-      setForm({ nombre_login: "", email: "", password: "" });
+      setForm({
+        nombre_login: "",
+        email: "",
+        password: "",
+        nombre: "",
+        apellido_paterno: "",
+        apellido_materno: "",
+        telefono: "",
+        roles_ids: [],
+      });
       await loadStaff();
     } catch (error: any) {
       console.error("Error creando personal:", error);
@@ -82,7 +113,7 @@ export default function PersonalPage() {
   };
 
   const staffWithoutCurrent = staff.filter(
-    (s) => s.email !== currentUser?.email
+    (s) => s.email !== currentUser?.email && !s.roles.includes("SUPER_ADMIN")
   );
 
   const filteredStaff = staffWithoutCurrent.filter((s) =>
@@ -111,12 +142,46 @@ export default function PersonalPage() {
             </Button>
           </DialogTrigger>
 
-          <DialogContent>
+          <DialogContent className="max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Crear Empleado</DialogTitle>
             </DialogHeader>
 
             <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-2">
+                <Input
+                  placeholder="Nombre"
+                  value={form.nombre}
+                  onChange={(e) =>
+                    setForm({ ...form, nombre: e.target.value })
+                  }
+                />
+                <Input
+                  placeholder="Apellido paterno"
+                  value={form.apellido_paterno}
+                  onChange={(e) =>
+                    setForm({ ...form, apellido_paterno: e.target.value })
+                  }
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <Input
+                  placeholder="Apellido materno"
+                  value={form.apellido_materno}
+                  onChange={(e) =>
+                    setForm({ ...form, apellido_materno: e.target.value })
+                  }
+                />
+                <Input
+                  placeholder="Teléfono"
+                  value={form.telefono}
+                  onChange={(e) =>
+                    setForm({ ...form, telefono: e.target.value })
+                  }
+                />
+              </div>
+
               <Input
                 placeholder="Nombre de usuario"
                 value={form.nombre_login}
@@ -141,6 +206,27 @@ export default function PersonalPage() {
                   setForm({ ...form, password: e.target.value })
                 }
               />
+
+              <div>
+                <label className="text-sm font-medium mb-2 block">Rol</label>
+                <Select
+                  value={form.roles_ids[0]?.toString() || ""}
+                  onValueChange={(value) =>
+                    setForm({ ...form, roles_ids: value ? [parseInt(value)] : [] })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecciona un rol" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {roles.map((role: any) => (
+                      <SelectItem key={role.id} value={role.id.toString()}>
+                        {role.nombre}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
               <Button className="w-full" onClick={handleCreateStaff}>
                 Guardar Empleado
@@ -209,7 +295,12 @@ export default function PersonalPage() {
               ) : (
                 filteredStaff.map((member) => (
                   <TableRow key={member.id}>
-                    <TableCell className="font-medium">{member.name}</TableCell>
+                    <TableCell className="font-medium">
+                      <div>
+                        <p className="font-semibold">{member.fullName}</p>
+                        <p className="text-xs text-gray-500">@{member.name}</p>
+                      </div>
+                    </TableCell>
                     <TableCell>{member.email}</TableCell>
                     <TableCell>
                       <div className="flex flex-wrap gap-1">
