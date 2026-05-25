@@ -140,8 +140,8 @@ export default function CompaniesPage() {
     <div className="space-y-8">
       <div className="flex items-center justify-between">
         <PageHeader
-          title="Companies"
-          description="Manage all registered companies"
+          title="Empresas"
+          description="Administra todas las empresas registradas"
         />
 
         <Dialog
@@ -151,20 +151,20 @@ export default function CompaniesPage() {
           <DialogTrigger asChild>
             <Button className="rounded-xl">
               <Plus className="mr-2 h-4 w-4" />
-              Create Company
+              Crear Empresa
             </Button>
           </DialogTrigger>
 
           <DialogContent>
             <DialogHeader>
               <DialogTitle>
-                Create Company
+                Crear Empresa
               </DialogTitle>
             </DialogHeader>
 
             <div className="space-y-4">
               <Input
-                placeholder="Company name"
+                placeholder="Nombre de la empresa"
                 value={form.name}
                 onChange={(e) =>
                   setForm({
@@ -186,7 +186,7 @@ export default function CompaniesPage() {
               />
 
               <Input
-                placeholder="Phone"
+                placeholder="Teléfono"
                 value={form.phone}
                 onChange={(e) =>
                   setForm({
@@ -197,7 +197,7 @@ export default function CompaniesPage() {
               />
 
               <Input
-                placeholder="Address"
+                placeholder="Dirección"
                 value={form.address}
                 onChange={(e) =>
                   setForm({
@@ -224,8 +224,8 @@ export default function CompaniesPage() {
                 disabled={loading}
               >
                 {loading
-                  ? "Saving..."
-                  : "Save Company"}
+                  ? "Guardando..."
+                  : "Guardar Empresa"}
               </Button>
             </div>
           </DialogContent>
@@ -238,7 +238,7 @@ export default function CompaniesPage() {
             <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
 
             <Input
-              placeholder="Search companies..."
+              placeholder="Buscar empresas..."
               className="pl-10"
               value={search}
               onChange={(e) =>
@@ -255,7 +255,7 @@ export default function CompaniesPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>
-                  Company
+                  Empresa
                 </TableHead>
 
                 <TableHead>
@@ -263,11 +263,11 @@ export default function CompaniesPage() {
                 </TableHead>
 
                 <TableHead>
-                  Phone
+                  Teléfono
                 </TableHead>
 
                 <TableHead>
-                  Address
+                  Dirección
                 </TableHead>
 
                 <TableHead>
@@ -275,11 +275,11 @@ export default function CompaniesPage() {
                 </TableHead>
 
                 <TableHead>
-                  Status
+                  Estado
                 </TableHead>
 
                 <TableHead>
-                  Actions
+                  Acciones
                 </TableHead>
               </TableRow>
             </TableHeader>
@@ -319,8 +319,8 @@ export default function CompaniesPage() {
                         }
                       >
                         {company.is_active
-                          ? "ACTIVE"
-                          : "SUSPENDED"}
+                          ? "ACTIVA"
+                          : "SUSPENDIDA"}
                       </Badge>
                     </TableCell>
 
@@ -339,8 +339,8 @@ export default function CompaniesPage() {
                         }
                       >
                         {company.is_active
-                          ? "Suspend"
-                          : "Activate"}
+                          ? "Suspender"
+                          : "Activar"}
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -353,7 +353,7 @@ export default function CompaniesPage() {
                     colSpan={7}
                     className="py-8 text-center text-gray-500"
                   >
-                    No companies found.
+                    No hay empresas encontradas.
                   </TableCell>
                 </TableRow>
               )}

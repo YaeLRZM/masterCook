@@ -151,8 +151,8 @@ export default function UsersPage() {
     <div className="space-y-8">
       <div className="flex items-center justify-between">
         <PageHeader
-          title="Company Administrators"
-          description="Manage company administrators"
+          title="Administradores de Empresa"
+          description="Administra los administradores de cada empresa"
         />
 
         <Dialog
@@ -162,14 +162,14 @@ export default function UsersPage() {
           <DialogTrigger asChild>
             <Button className="rounded-xl">
               <Plus className="mr-2 h-4 w-4" />
-              Create Admin
+              Crear Administrador
             </Button>
           </DialogTrigger>
 
           <DialogContent>
             <DialogHeader>
               <DialogTitle>
-                Create Admin
+                Crear Administrador
               </DialogTitle>
             </DialogHeader>
 
@@ -242,7 +242,7 @@ export default function UsersPage() {
                 }
               >
                 <option value="">
-                  Select company
+                  Seleccionar empresa
                 </option>
 
                 {companies.map((company) => (
@@ -271,7 +271,7 @@ export default function UsersPage() {
                 className="w-full"
                 onClick={handleCreateUser}
               >
-                Save Admin
+                Guardar Administrador
               </Button>
             </div>
           </DialogContent>
@@ -284,7 +284,7 @@ export default function UsersPage() {
             <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
 
             <Input
-              placeholder="Search admins..."
+              placeholder="Buscar administradores..."
               className="pl-10"
               value={search}
               onChange={(e) =>
@@ -301,7 +301,7 @@ export default function UsersPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>
-                  Name
+                  Nombre
                 </TableHead>
 
                 <TableHead>
@@ -313,15 +313,15 @@ export default function UsersPage() {
                 </TableHead>
 
                 <TableHead>
-                  Company
+                  Empresa
                 </TableHead>
 
                 <TableHead>
-                  Role
+                  Rol
                 </TableHead>
 
                 <TableHead>
-                  Status
+                  Estado
                 </TableHead>
               </TableRow>
             </TableHeader>
@@ -375,7 +375,7 @@ export default function UsersPage() {
                     colSpan={6}
                     className="py-8 text-center text-gray-500"
                   >
-                    No admins found.
+                    No hay administradores encontrados.
                   </TableCell>
                 </TableRow>
               )}

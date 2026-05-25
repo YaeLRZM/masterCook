@@ -7,7 +7,6 @@ import {
   LayoutDashboard,
   Building2,
   Users,
-  Settings,
 } from "lucide-react";
 
 const links = [
@@ -18,21 +17,15 @@ const links = [
   },
 
   {
-    label: "Companies",
+    label: "Empresas",
     href: "/super-admin/companies",
     icon: Building2,
   },
 
   {
-    label: "Users",
+    label: "Usuarios",
     href: "/super-admin/users",
     icon: Users,
-  },
-
-  {
-    label: "Settings",
-    href: "/super-admin/settings",
-    icon: Settings,
   },
 ];
 
@@ -43,12 +36,10 @@ export default function Sidebar() {
     <aside className="flex min-h-screen w-[270px] flex-col border-r border-gray-200 bg-white">
       {/* LOGO */}
 
-      <div className="border-b border-gray-100 p-6">
-        <h1 className="text-2xl font-bold tracking-tight">
-          MasterCook
-        </h1>
+      <div className="border-b border-gray-100 px-6 py-8">
+        <img src="/logoSide.png" alt="MasterCook Logo" className="h-40 w-auto mb-6 mx-auto block" />
 
-        <p className="mt-1 text-sm text-gray-500">
+        <p className="mt-4 text-center text-xl font-semibold text-gray-700">
           Super Admin Panel
         </p>
       </div>
@@ -79,21 +70,6 @@ export default function Sidebar() {
           );
         })}
       </nav>
-
-      {/* FOOTER */}
-
-      <div className="border-t border-gray-100 p-4">
-        <div className="rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 p-4 text-white">
-          <p className="text-sm font-semibold">
-            MasterCook
-          </p>
-
-          <p className="mt-1 text-xs text-blue-100">
-            Intelligent kitchen
-            management system.
-          </p>
-        </div>
-      </div>
     </aside>
   );
 }
