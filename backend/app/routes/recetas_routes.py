@@ -32,6 +32,14 @@ from app.services.imagen_service import (
 router = APIRouter(prefix="/recetas", tags=["Recetas"])
 
 
+@router.options("/")
+@router.options("/{receta_id}")
+@router.options("/{receta_id}/imagen")
+@router.options("/{receta_id}/recalcular-costo")
+def options_handler():
+    return {}
+
+
 def _validar_ingredientes_del_tenant(
     db: Session,
     ingrediente_ids: List[int],

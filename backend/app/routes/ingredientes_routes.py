@@ -37,6 +37,13 @@ from app.services.imagen_service import (
 router = APIRouter(prefix="/ingredientes", tags=["Ingredientes"])
 
 
+@router.options("/")
+@router.options("/{ingrediente_id}")
+@router.options("/{ingrediente_id}/imagen")
+def options_handler():
+    return {}
+
+
 @router.get("/", response_model=List[IngredienteSalida])
 def listar_ingredientes(
     db: Session = Depends(get_db),
