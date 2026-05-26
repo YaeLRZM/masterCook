@@ -54,8 +54,13 @@ export default function AdminDashboardPage() {
         setStaffCount(staff.length);
         setActiveCount(staff.filter((s) => s.status === "ACTIVE").length);
 
-        const audits = await getAuditorias();
-        setAuditorias(audits);
+        try {
+          const audits = await getAuditorias();
+          setAuditorias(audits);
+        } catch (auditError) {
+          console.error("Error cargando auditorías:", auditError);
+          setAuditorias([]);
+        }
       } catch (error) {
         console.error("Error cargando dashboard:", error);
       } finally {
