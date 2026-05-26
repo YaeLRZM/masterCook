@@ -183,6 +183,81 @@ def eliminar_receta(
     db.commit()
 
 
+@router.get("/{receta_id}/detalles")
+def obtener_detalles_receta(
+    receta_id: int,
+    db: Session = Depends(get_db),
+    empresa_id: int = Depends(obtener_empresa_actual_id),
+):
+    """Devuelve detalles completos de la receta con desglose de costos por ingrediente."""
+    from app.services.conversion_service import obtener_factor_conversion
+    from app.services.receta_service import _costo_efectivo_por_unidad
+    from app.models.unidad_medida import UnidadMedida
+
+    receta = obtener_objeto_del_tenant(db, Receta, receta_id, empresa_id)
+
+    detalles_ingredientes = db.execute(
+        select(RecetaIngrediente).where(RecetaIngrediente.receta_id == receta.id)
+    ).scalars().all()
+
+    ingredientes_desglose = []
+    for detalle in detalles_ingredientes:
+        ingrediente = db.execute(
+            select(Ingrediente).where(
+                Ingrediente.id == detalle.ingrediente_id,
+                Ingrediente.empresa_id == empresa_id,
+            )
+        ).scalar_one_or_none()
+
+        if ingrediente is None:
+            continue
+
+        # Obtener nombre de la unidad de medida
+        unidad_obj = db.execute(
+            select(UnidadMedida).where(UnidadMedida.id == detalle.unidad_medida_id)
+        ).scalar_one_or_none()
+        unidad_nombre = unidad_obj.nombre if unidad_obj else "unidad"
+
+        # Calcular costo
+        try:
+            factor = obtener_factor_conversion(
+                db,
+                detalle.unidad_medida_id,
+                ingrediente.unidad_medida_id,
+            )
+        except ValueError:
+            factor = 1.0
+
+        cantidad_normalizada = detalle.cantidad * factor
+        costo_unitario = _costo_efectivo_por_unidad(
+            ingrediente.costo_base,
+            ingrediente.merma_porcentaje,
+        )
+        subtotal = cantidad_normalizada * costo_unitario
+
+        ingredientes_desglose.append({
+            "ingrediente_id": ingrediente.id,
+            "nombre": ingrediente.nombre,
+            "cantidad": detalle.cantidad,
+            "unidad_medida": unidad_nombre,
+            "costo_base": ingrediente.costo_base,
+            "merma_porcentaje": ingrediente.merma_porcentaje,
+            "costo_unitario_efectivo": round(costo_unitario, 4),
+            "subtotal": round(subtotal, 4),
+        })
+
+    return {
+        "id": receta.id,
+        "nombre": receta.nombre,
+        "procedimiento": receta.procedimiento,
+        "rendimiento_porciones": receta.rendimiento_porciones,
+        "imagen_url": receta.imagen_url,
+        "es_subreceta": receta.es_subreceta,
+        "costo_total_calculado": receta.costo_total_calculado,
+        "ingredientes": ingredientes_desglose,
+    }
+
+
 @router.post("/{receta_id}/imagen", response_model=RecetaSalida)
 def subir_imagen_receta(
     receta_id: int,

@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import PageHeader from "@/components/common/PageHeader";
 import { Plus, ChefHat, Edit2, Trash2, X, Clock, Users } from "lucide-react";
 import { getRecetas, deleteReceta, createReceta, updateReceta, uploadRecetaImage, type Receta } from "@/features/chef/services/recetas.service";
+import { API_URL } from "@/lib/axios";
 import { getIngredientes, type Ingrediente } from "@/features/chef/services/ingredientes.service";
 import { getUnidadesMedida, type UnidadMedida } from "@/features/chef/services/unidades.service";
 import {
@@ -408,7 +409,7 @@ export default function RecetasPage() {
               <div className="relative h-44 bg-gradient-to-br from-orange-100 to-orange-50 flex items-center justify-center overflow-hidden">
                 {receta.imagen_url ? (
                   <img
-                    src={receta.imagen_url}
+                    src={`${API_URL}${receta.imagen_url}`}
                     alt={receta.nombre}
                     className="h-full w-full object-cover"
                     onError={(e) => {

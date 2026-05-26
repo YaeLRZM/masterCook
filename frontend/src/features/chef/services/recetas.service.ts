@@ -73,7 +73,7 @@ export async function uploadRecetaImage(
   file: File
 ): Promise<Receta> {
   const formData = new FormData();
-  formData.append("file", file);
+  formData.append("archivo", file);
   const { data } = await api.post<Receta>(`/recetas/${id}/imagen`, formData, {
     headers: {
       "Content-Type": "multipart/form-data",

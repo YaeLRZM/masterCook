@@ -18,6 +18,7 @@ import {
   uploadIngredienteImage,
   type Ingrediente,
 } from "@/features/chef/services/ingredientes.service";
+import { API_URL } from "@/lib/axios";
 import {
   getUnidadesMedida,
   type UnidadMedida,
@@ -337,7 +338,7 @@ export default function IngredientesPage() {
               <div className="relative h-40 bg-gradient-to-br from-orange-100 to-orange-50 flex items-center justify-center overflow-hidden">
                 {ingrediente.imagen_url ? (
                   <img
-                    src={ingrediente.imagen_url}
+                    src={`${API_URL}${ingrediente.imagen_url}`}
                     alt={ingrediente.nombre}
                     className="h-full w-full object-cover"
                     onError={(e) => {

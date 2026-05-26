@@ -58,11 +58,15 @@ def calcular_costo_receta(
         if ingrediente is None:
             continue
 
-        factor = obtener_factor_conversion(
-            db,
-            unidad_origen_id=detalle.unidad_medida_id,
-            unidad_destino_id=ingrediente.unidad_medida_id,
-        )
+        try:
+            factor = obtener_factor_conversion(
+                db,
+                unidad_origen_id=detalle.unidad_medida_id,
+                unidad_destino_id=ingrediente.unidad_medida_id,
+            )
+        except ValueError:
+            # Si no hay conversion, usar la cantidad tal cual (asumir misma unidad)
+            factor = 1.0
 
         cantidad_normalizada = detalle.cantidad * factor
         costo_unitario = _costo_efectivo_por_unidad(
