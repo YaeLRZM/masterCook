@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import PageHeader from "@/components/common/PageHeader";
 import { Plus, ChefHat, Edit2, Trash2, X, Clock, Users } from "lucide-react";
-import { getRecetas, deleteReceta, createReceta, updateReceta, type Receta } from "@/features/chef/services/recetas.service";
+import { getRecetas, deleteReceta, createReceta, updateReceta, uploadRecetaImage, type Receta } from "@/features/chef/services/recetas.service";
 import { getIngredientes, type Ingrediente } from "@/features/chef/services/ingredientes.service";
 import { getUnidadesMedida, type UnidadMedida } from "@/features/chef/services/unidades.service";
 import {
@@ -24,6 +24,7 @@ export default function RecetasPage() {
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [imagenFile, setImagenFile] = useState<File | null>(null);
   const [form, setForm] = useState({
     nombre: "",
     procedimiento: "",
@@ -94,6 +95,7 @@ export default function RecetasPage() {
       ingredientes: [],
     });
     setEditingId(null);
+    setImagenFile(null);
     setNuevoIngrediente({
       ingrediente_id: 0,
       unidad_medida_id: 1,
@@ -108,22 +110,36 @@ export default function RecetasPage() {
     }
 
     try {
+      let recetaId: number;
+
       if (editingId) {
-        await updateReceta(editingId, {
+        const result = await updateReceta(editingId, {
           nombre: form.nombre,
           procedimiento: form.procedimiento,
           rendimiento_porciones: form.rendimiento_porciones,
           es_subreceta: form.es_subreceta,
           ingredientes: form.ingredientes,
         });
+        recetaId = result.id;
       } else {
-        await createReceta({
+        const result = await createReceta({
           nombre: form.nombre,
           procedimiento: form.procedimiento,
           rendimiento_porciones: form.rendimiento_porciones,
           es_subreceta: form.es_subreceta,
           ingredientes: form.ingredientes,
         });
+        recetaId = result.id;
+      }
+
+      // Si hay un archivo de imagen, lo subimos
+      if (imagenFile) {
+        try {
+          await uploadRecetaImage(recetaId, imagenFile);
+        } catch (imageError) {
+          console.error("Error subiendo imagen:", imageError);
+          alert("Se guardó la receta pero hubo error al subir la imagen");
+        }
       }
 
       resetForm();
@@ -204,6 +220,28 @@ export default function RecetasPage() {
                     setForm({ ...form, procedimiento: e.target.value })
                   }
                 />
+              </div>
+
+              <div>
+                <label className="text-sm font-medium">Imagen (opcional)</label>
+                <div className="flex gap-2">
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        setImagenFile(file);
+                      }
+                    }}
+                    className="flex-1 border rounded-lg p-2 text-sm"
+                  />
+                  {imagenFile && (
+                    <div className="text-sm text-green-600 py-2 px-3 bg-green-50 rounded-lg">
+                      {imagenFile.name}
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">

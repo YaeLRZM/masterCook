@@ -59,3 +59,17 @@ export async function updateIngrediente(
 export async function deleteIngrediente(id: number): Promise<void> {
   await api.delete(`/ingredientes/${id}`);
 }
+
+export async function uploadIngredienteImage(
+  id: number,
+  file: File
+): Promise<Ingrediente> {
+  const formData = new FormData();
+  formData.append("archivo", file);
+  const { data } = await api.post<Ingrediente>(`/ingredientes/${id}/imagen`, formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+  return data;
+}

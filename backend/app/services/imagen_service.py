@@ -73,6 +73,34 @@ def guardar_imagen_receta(
     return f"/uploads/empresas/{empresa_id}/recetas/{nombre_archivo}"
 
 
+def guardar_imagen_ingrediente(
+    archivo: UploadFile,
+    empresa_id: int,
+    ingrediente_id: int,
+) -> str:
+    """
+    Guarda la imagen en disco y devuelve la URL publica (string)
+    lista para persistir en `ingredientes.imagen_url`.
+    """
+    extension = _validar_archivo(archivo)
+
+    contenido = archivo.file.read()
+    if len(contenido) > MAX_UPLOAD_BYTES:
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail=f"La imagen excede el tamano maximo ({MAX_UPLOAD_MB} MB)",
+        )
+
+    destino_dir = UPLOADS_DIR / "empresas" / str(empresa_id) / "ingredientes"
+    destino_dir.mkdir(parents=True, exist_ok=True)
+
+    nombre_archivo = f"{ingrediente_id}_{uuid4().hex[:8]}{extension}"
+    destino = destino_dir / nombre_archivo
+    destino.write_bytes(contenido)
+
+    return f"/uploads/empresas/{empresa_id}/ingredientes/{nombre_archivo}"
+
+
 def borrar_imagen_por_url(imagen_url: Optional[str]) -> None:
     """Borra el archivo fisico apuntado por una URL `/uploads/...`."""
     if not imagen_url or not imagen_url.startswith("/uploads/"):

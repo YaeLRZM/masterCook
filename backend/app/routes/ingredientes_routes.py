@@ -9,7 +9,7 @@ Ademas calcula merma_porcentaje automaticamente a partir de peso_bruto y
 peso_neto, sin que el cliente la mande.
 """
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
 from sqlalchemy import select
 from typing import List
@@ -28,6 +28,10 @@ from app.schemas.ingrediente_schema import (
     IngredienteSalida,
 )
 from app.services.ingrediente_service import calcular_merma_porcentaje
+from app.services.imagen_service import (
+    borrar_imagen_por_url,
+    guardar_imagen_ingrediente,
+)
 
 
 router = APIRouter(prefix="/ingredientes", tags=["Ingredientes"])
@@ -125,5 +129,54 @@ def eliminar_ingrediente(
     ingrediente = obtener_objeto_del_tenant(
         db, Ingrediente, ingrediente_id, empresa_id
     )
+    borrar_imagen_por_url(ingrediente.imagen_url)
     db.delete(ingrediente)
     db.commit()
+
+
+@router.post("/{ingrediente_id}/imagen", response_model=IngredienteSalida)
+def subir_imagen_ingrediente(
+    ingrediente_id: int,
+    archivo: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    empresa_id: int = Depends(obtener_empresa_actual_id),
+):
+    """Sube/reemplaza la imagen de un ingrediente."""
+    ingrediente = obtener_objeto_del_tenant(
+        db, Ingrediente, ingrediente_id, empresa_id
+    )
+
+    # Si ya tenia imagen, la borramos para no dejar archivos huerfanos.
+    borrar_imagen_por_url(ingrediente.imagen_url)
+
+    ingrediente.imagen_url = guardar_imagen_ingrediente(
+        archivo=archivo,
+        empresa_id=empresa_id,
+        ingrediente_id=ingrediente.id,
+    )
+    db.add(ingrediente)
+    db.commit()
+    db.refresh(ingrediente)
+    return ingrediente
+
+
+@router.delete("/{ingrediente_id}/imagen", response_model=IngredienteSalida)
+def quitar_imagen_ingrediente(
+    ingrediente_id: int,
+    db: Session = Depends(get_db),
+    empresa_id: int = Depends(obtener_empresa_actual_id),
+):
+    ingrediente = obtener_objeto_del_tenant(
+        db, Ingrediente, ingrediente_id, empresa_id
+    )
+    if not ingrediente.imagen_url:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="El ingrediente no tiene imagen",
+        )
+    borrar_imagen_por_url(ingrediente.imagen_url)
+    ingrediente.imagen_url = None
+    db.add(ingrediente)
+    db.commit()
+    db.refresh(ingrediente)
+    return ingrediente

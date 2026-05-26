@@ -15,6 +15,7 @@ import {
   deleteIngrediente,
   createIngrediente,
   updateIngrediente,
+  uploadIngredienteImage,
   type Ingrediente,
 } from "@/features/chef/services/ingredientes.service";
 import {
@@ -37,6 +38,7 @@ export default function IngredientesPage() {
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [imagenFile, setImagenFile] = useState<File | null>(null);
   const [form, setForm] = useState({
     nombre: "",
     costo_base: 0,
@@ -74,8 +76,10 @@ export default function IngredientesPage() {
     }
 
     try {
+      let ingredienteId: number;
+
       if (editingId) {
-        await updateIngrediente(editingId, {
+        const result = await updateIngrediente(editingId, {
           nombre: form.nombre,
           costo_base: form.costo_base,
           unidad_medida_id: form.unidad_medida_id,
@@ -83,10 +87,10 @@ export default function IngredientesPage() {
           peso_neto: form.peso_neto,
           stock: form.stock,
           stock_minimo: form.stock_minimo,
-          imagen_url: form.imagen_url || undefined,
         });
+        ingredienteId = result.id;
       } else {
-        await createIngrediente({
+        const result = await createIngrediente({
           nombre: form.nombre,
           costo_base: form.costo_base,
           unidad_medida_id: form.unidad_medida_id,
@@ -94,11 +98,22 @@ export default function IngredientesPage() {
           peso_neto: form.peso_neto,
           stock: form.stock,
           stock_minimo: form.stock_minimo,
-          imagen_url: form.imagen_url || undefined,
         });
+        ingredienteId = result.id;
+      }
+
+      // Si hay un archivo de imagen, lo subimos
+      if (imagenFile) {
+        try {
+          await uploadIngredienteImage(ingredienteId, imagenFile);
+        } catch (imageError) {
+          console.error("Error subiendo imagen:", imageError);
+          alert("Se guardó el ingrediente pero hubo error al subir la imagen");
+        }
       }
 
       resetForm();
+      setImagenFile(null);
       setOpen(false);
       await cargarIngredientes();
     } catch (error) {
@@ -134,6 +149,7 @@ export default function IngredientesPage() {
       imagen_url: "",
     });
     setEditingId(null);
+    setImagenFile(null);
   };
 
   const handleOpenDialog = () => {
@@ -273,12 +289,25 @@ export default function IngredientesPage() {
               </div>
 
               <div>
-                <label className="text-sm font-medium">URL de Imagen (opcional)</label>
-                <Input
-                  placeholder="https://ejemplo.com/imagen.jpg"
-                  value={form.imagen_url}
-                  onChange={(e) => setForm({ ...form, imagen_url: e.target.value })}
-                />
+                <label className="text-sm font-medium">Imagen (opcional)</label>
+                <div className="flex gap-2">
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        setImagenFile(file);
+                      }
+                    }}
+                    className="flex-1 border rounded-lg p-2 text-sm"
+                  />
+                  {imagenFile && (
+                    <div className="text-sm text-green-600 py-2 px-3 bg-green-50 rounded-lg">
+                      {imagenFile.name}
+                    </div>
+                  )}
+                </div>
               </div>
 
               <Button className="w-full" onClick={handleGuardar}>
