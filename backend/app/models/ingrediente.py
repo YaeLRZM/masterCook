@@ -30,6 +30,8 @@ class Ingrediente(Base):
     stock = Column(Float, default=0)
     stock_minimo = Column(Float, default=0)
 
+    imagen_url = Column(String, nullable=True)
+
     activo = Column(Boolean, default=True)
 
     creado_en = Column(DateTime(timezone=True), server_default=func.now())

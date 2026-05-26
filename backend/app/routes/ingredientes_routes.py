@@ -71,6 +71,7 @@ def crear_ingrediente(
         merma_porcentaje=merma,               # calculo automatico
         stock=payload.stock or 0,
         stock_minimo=payload.stock_minimo or 0,
+        imagen_url=payload.imagen_url,
     )
     db.add(nuevo)
     db.commit()

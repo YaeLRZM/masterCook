@@ -10,6 +10,7 @@ class IngredienteCrear(BaseModel):
     peso_neto: Optional[float] = Field(default=0, ge=0)
     stock: Optional[float] = Field(default=0, ge=0)
     stock_minimo: Optional[float] = Field(default=0, ge=0)
+    imagen_url: Optional[str] = None
 
 
 class IngredienteActualizar(BaseModel):
@@ -20,6 +21,7 @@ class IngredienteActualizar(BaseModel):
     peso_neto: Optional[float] = None
     stock: Optional[float] = None
     stock_minimo: Optional[float] = None
+    imagen_url: Optional[str] = None
     activo: Optional[bool] = None
 
 
@@ -36,4 +38,5 @@ class IngredienteSalida(BaseModel):
     merma_porcentaje: float
     stock: float
     stock_minimo: float
+    imagen_url: Optional[str] = None
     activo: bool
