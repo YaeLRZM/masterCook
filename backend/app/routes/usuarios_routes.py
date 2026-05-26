@@ -42,7 +42,7 @@ from app.models.auditoria import Auditoria
 
 router = APIRouter(prefix="/usuarios", tags=["Personal"])
 
-solo_admin = requiere_roles(["ADMIN"])
+solo_admin = requiere_roles(["ADMIN", "SUPER_ADMIN"])
 
 
 def _rol_asignable_o_404(db: Session, rol_id: int) -> Rol:
