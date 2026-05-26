@@ -116,7 +116,7 @@ export default function AdminDashboardPage() {
                   {auditorias.map((audit) => (
                     <TableRow key={audit.id}>
                       <TableCell className="whitespace-nowrap text-sm">
-                        {new Date(audit.creado_en).toLocaleDateString()} {new Date(audit.creado_en).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        {new Date(audit.fecha).toLocaleDateString()} {new Date(audit.fecha).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </TableCell>
                       <TableCell className="text-sm">
                         ID: {audit.hecho_por}

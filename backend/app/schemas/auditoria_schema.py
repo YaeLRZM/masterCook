@@ -15,4 +15,4 @@ class AuditoriaSalida(BaseModel):
     modulo: Optional[str]
     descripcion: Optional[str]
     ip: Optional[str]
-    creado_en: datetime
+    fecha: datetime

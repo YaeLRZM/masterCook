@@ -316,6 +316,6 @@ def listar_auditorias(
     return db.execute(
         select(Auditoria)
         .where(Auditoria.empresa_id == empresa_id)
-        .order_by(Auditoria.creado_en.desc())
+        .order_by(Auditoria.fecha.desc())
         .limit(50)
     ).scalars().all()

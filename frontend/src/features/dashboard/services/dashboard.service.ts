@@ -10,7 +10,7 @@ export interface Auditoria {
   modulo: string | null;
   descripcion: string | null;
   ip: string | null;
-  creado_en: string;
+  fecha: string;
 }
 
 export async function getAuditorias(): Promise<Auditoria[]> {
