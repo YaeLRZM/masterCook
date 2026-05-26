@@ -69,9 +69,16 @@ export default function RecetasPage() {
       alert("Completa los datos del ingrediente");
       return;
     }
+    const yaExiste = form.ingredientes.some(
+      (i) => i.ingrediente_id === nuevoIngrediente.ingrediente_id
+    );
+    if (yaExiste) {
+      alert("Este ingrediente ya está agregado");
+      return;
+    }
     setForm({
       ...form,
-      ingredientes: [...form.ingredientes, nuevoIngrediente],
+      ingredientes: [...form.ingredientes, { ...nuevoIngrediente }],
     });
     setNuevoIngrediente({
       ingrediente_id: 0,
@@ -185,7 +192,14 @@ export default function RecetasPage() {
         />
 
         <Dialog open={open} onOpenChange={(newOpen) => {
-          if (!newOpen) resetForm();
+          if (!newOpen) {
+            resetForm();
+          } else {
+            // Recargar ingredientes cuando se abre
+            if (ingredientes.length === 0) {
+              getIngredientes().then(setIngredientes).catch(console.error);
+            }
+          }
           setOpen(newOpen);
         }}>
           <DialogTrigger asChild>
@@ -283,23 +297,29 @@ export default function RecetasPage() {
                       <label className="text-xs font-medium text-gray-600">
                         Ingrediente
                       </label>
-                      <select
-                        className="w-full border rounded p-2 text-sm"
-                        value={nuevoIngrediente.ingrediente_id}
-                        onChange={(e) =>
-                          setNuevoIngrediente({
-                            ...nuevoIngrediente,
-                            ingrediente_id: parseInt(e.target.value) || 0,
-                          })
-                        }
-                      >
-                        <option value={0}>Seleccionar...</option>
-                        {ingredientes.map((ing) => (
-                          <option key={ing.id} value={ing.id}>
-                            {ing.nombre}
-                          </option>
-                        ))}
-                      </select>
+                      {ingredientes.length === 0 ? (
+                        <div className="w-full border rounded p-2 text-xs text-gray-500 bg-yellow-50">
+                          Crea ingredientes primero
+                        </div>
+                      ) : (
+                        <select
+                          className="w-full border rounded p-2 text-sm"
+                          value={nuevoIngrediente.ingrediente_id}
+                          onChange={(e) =>
+                            setNuevoIngrediente({
+                              ...nuevoIngrediente,
+                              ingrediente_id: parseInt(e.target.value) || 0,
+                            })
+                          }
+                        >
+                          <option value={0}>Seleccionar...</option>
+                          {ingredientes.map((ing) => (
+                            <option key={ing.id} value={ing.id}>
+                              {ing.nombre}
+                            </option>
+                          ))}
+                        </select>
+                      )}
                     </div>
 
                     <div>
