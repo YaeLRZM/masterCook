@@ -1,14 +1,23 @@
 import { api } from "@/lib/axios";
 
+export interface RecetaIngrediente {
+  id: number;
+  ingrediente_id: number;
+  unidad_medida_id: number;
+  cantidad: number;
+}
+
 export interface Receta {
   id: number;
+  empresa_id: number;
   nombre: string;
-  descripcion?: string;
-  costo_total: number;
-  porciones: number;
-  costo_por_porcion: number;
-  tiempo_preparacion?: number;
+  procedimiento?: string;
+  rendimiento_porciones: number;
   imagen_url?: string;
+  costo_total_calculado: number;
+  es_subreceta: boolean;
+  activa: boolean;
+  ingredientes: RecetaIngrediente[];
 }
 
 export async function getRecetas(): Promise<Receta[]> {
@@ -23,9 +32,14 @@ export async function getReceta(id: number): Promise<Receta> {
 
 export async function createReceta(payload: {
   nombre: string;
-  descripcion?: string;
-  porciones: number;
-  tiempo_preparacion?: number;
+  procedimiento?: string;
+  rendimiento_porciones: number;
+  es_subreceta?: boolean;
+  ingredientes: Array<{
+    ingrediente_id: number;
+    unidad_medida_id: number;
+    cantidad: number;
+  }>;
 }): Promise<Receta> {
   const { data } = await api.post<Receta>("/recetas/", payload);
   return data;
@@ -35,9 +49,15 @@ export async function updateReceta(
   id: number,
   payload: Partial<{
     nombre: string;
-    descripcion?: string;
-    porciones: number;
-    tiempo_preparacion?: number;
+    procedimiento: string;
+    rendimiento_porciones: number;
+    es_subreceta: boolean;
+    activa: boolean;
+    ingredientes: Array<{
+      ingrediente_id: number;
+      unidad_medida_id: number;
+      cantidad: number;
+    }>;
   }>
 ): Promise<Receta> {
   const { data } = await api.patch<Receta>(`/recetas/${id}`, payload);

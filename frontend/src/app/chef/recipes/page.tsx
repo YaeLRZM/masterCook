@@ -3,27 +3,113 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import PageHeader from "@/components/common/PageHeader";
-import { Plus, ChefHat, Edit2, Trash2 } from "lucide-react";
-import { getRecetas, deleteReceta, type Receta } from "@/features/chef/services/recetas.service";
+import { Plus, ChefHat, Edit2, Trash2, X } from "lucide-react";
+import { getRecetas, deleteReceta, createReceta, type Receta } from "@/features/chef/services/recetas.service";
+import { getIngredientes, type Ingrediente } from "@/features/chef/services/ingredientes.service";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 export default function RecetasPage() {
   const [recetas, setRecetas] = useState<Receta[]>([]);
+  const [ingredientes, setIngredientes] = useState<Ingrediente[]>([]);
   const [loading, setLoading] = useState(true);
+  const [open, setOpen] = useState(false);
+  const [form, setForm] = useState({
+    nombre: "",
+    procedimiento: "",
+    rendimiento_porciones: 1,
+    es_subreceta: false,
+    ingredientes: [] as Array<{
+      ingrediente_id: number;
+      unidad_medida_id: number;
+      cantidad: number;
+    }>,
+  });
+  const [nuevoIngrediente, setNuevoIngrediente] = useState({
+    ingrediente_id: 0,
+    unidad_medida_id: 1,
+    cantidad: 0,
+  });
 
   useEffect(() => {
-    const cargarRecetas = async () => {
-      try {
-        const datos = await getRecetas();
-        setRecetas(datos);
-      } catch (error) {
-        console.error("Error cargando recetas:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    cargarRecetas();
+    cargarDatos();
   }, []);
+
+  const cargarDatos = async () => {
+    try {
+      const [recetasData, ingredientesData] = await Promise.all([
+        getRecetas(),
+        getIngredientes(),
+      ]);
+      setRecetas(recetasData);
+      setIngredientes(ingredientesData);
+    } catch (error) {
+      console.error("Error cargando datos:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAgregarIngrediente = () => {
+    if (nuevoIngrediente.ingrediente_id === 0 || nuevoIngrediente.cantidad <= 0) {
+      alert("Completa los datos del ingrediente");
+      return;
+    }
+    setForm({
+      ...form,
+      ingredientes: [...form.ingredientes, nuevoIngrediente],
+    });
+    setNuevoIngrediente({
+      ingrediente_id: 0,
+      unidad_medida_id: 1,
+      cantidad: 0,
+    });
+  };
+
+  const handleQuitarIngrediente = (index: number) => {
+    setForm({
+      ...form,
+      ingredientes: form.ingredientes.filter((_, i) => i !== index),
+    });
+  };
+
+  const handleGuardar = async () => {
+    if (!form.nombre || form.rendimiento_porciones <= 0) {
+      alert("Por favor completa los datos requeridos");
+      return;
+    }
+
+    try {
+      await createReceta({
+        nombre: form.nombre,
+        procedimiento: form.procedimiento,
+        rendimiento_porciones: form.rendimiento_porciones,
+        es_subreceta: form.es_subreceta,
+        ingredientes: form.ingredientes,
+      });
+
+      setForm({
+        nombre: "",
+        procedimiento: "",
+        rendimiento_porciones: 1,
+        es_subreceta: false,
+        ingredientes: [],
+      });
+
+      setOpen(false);
+      await cargarDatos();
+    } catch (error) {
+      console.error("Error guardando receta:", error);
+      alert("Error al guardar la receta");
+    }
+  };
 
   const handleEliminar = async (id: number) => {
     if (confirm("¿Estás seguro de que deseas eliminar esta receta?")) {
@@ -39,19 +125,187 @@ export default function RecetasPage() {
 
   return (
     <div className="space-y-8">
-      <PageHeader
-        title="Recetas"
-        description="Administra todas las recetas de la cocina"
-      />
+      <div className="flex items-center justify-between">
+        <PageHeader
+          title="Recetas"
+          description="Administra todas las recetas de la cocina"
+        />
 
-      <div className="flex justify-end">
-        <Link
-          href="/chef/recipes/new"
-          className="flex items-center gap-2 rounded-2xl bg-orange-500 px-5 py-3 text-sm font-medium text-white hover:bg-orange-600"
-        >
-          <Plus className="h-4 w-4" />
-          Nueva Receta
-        </Link>
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogTrigger asChild>
+            <Button className="rounded-xl">
+              <Plus className="mr-2 h-4 w-4" />
+              Nueva Receta
+            </Button>
+          </DialogTrigger>
+
+          <DialogContent className="max-h-[90vh] overflow-y-auto max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Crear Nueva Receta</DialogTitle>
+            </DialogHeader>
+
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium">Nombre de la Receta *</label>
+                <Input
+                  placeholder="Ej: Arroz con Pollo"
+                  value={form.nombre}
+                  onChange={(e) => setForm({ ...form, nombre: e.target.value })}
+                />
+              </div>
+
+              <div>
+                <label className="text-sm font-medium">Procedimiento</label>
+                <textarea
+                  className="w-full border rounded-lg p-2 text-sm"
+                  rows={4}
+                  placeholder="Describe los pasos..."
+                  value={form.procedimiento}
+                  onChange={(e) =>
+                    setForm({ ...form, procedimiento: e.target.value })
+                  }
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium">Rendimiento (porciones) *</label>
+                  <Input
+                    type="number"
+                    min="1"
+                    value={form.rendimiento_porciones}
+                    onChange={(e) =>
+                      setForm({
+                        ...form,
+                        rendimiento_porciones: parseInt(e.target.value) || 1,
+                      })
+                    }
+                  />
+                </div>
+                <div className="flex items-end">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={form.es_subreceta}
+                      onChange={(e) =>
+                        setForm({ ...form, es_subreceta: e.target.checked })
+                      }
+                    />
+                    <span className="text-sm">Es sub-receta</span>
+                  </label>
+                </div>
+              </div>
+
+              <div className="border-t pt-4">
+                <h3 className="text-sm font-semibold mb-3">Ingredientes</h3>
+
+                <div className="space-y-2 mb-4">
+                  <div className="grid grid-cols-3 gap-2">
+                    <div>
+                      <label className="text-xs font-medium text-gray-600">
+                        Ingrediente
+                      </label>
+                      <select
+                        className="w-full border rounded p-2 text-sm"
+                        value={nuevoIngrediente.ingrediente_id}
+                        onChange={(e) =>
+                          setNuevoIngrediente({
+                            ...nuevoIngrediente,
+                            ingrediente_id: parseInt(e.target.value) || 0,
+                          })
+                        }
+                      >
+                        <option value={0}>Seleccionar...</option>
+                        {ingredientes.map((ing) => (
+                          <option key={ing.id} value={ing.id}>
+                            {ing.nombre}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-medium text-gray-600">
+                        Unidad
+                      </label>
+                      <Input
+                        type="number"
+                        placeholder="ID unidad"
+                        value={nuevoIngrediente.unidad_medida_id}
+                        onChange={(e) =>
+                          setNuevoIngrediente({
+                            ...nuevoIngrediente,
+                            unidad_medida_id: parseInt(e.target.value) || 1,
+                          })
+                        }
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-medium text-gray-600">
+                        Cantidad
+                      </label>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        placeholder="0.00"
+                        value={nuevoIngrediente.cantidad}
+                        onChange={(e) =>
+                          setNuevoIngrediente({
+                            ...nuevoIngrediente,
+                            cantidad: parseFloat(e.target.value) || 0,
+                          })
+                        }
+                      />
+                    </div>
+                  </div>
+
+                  <Button
+                    onClick={handleAgregarIngrediente}
+                    variant="outline"
+                    className="w-full"
+                  >
+                    <Plus className="mr-2 h-4 w-4" />
+                    Agregar Ingrediente
+                  </Button>
+                </div>
+
+                {form.ingredientes.length > 0 && (
+                  <div className="space-y-2">
+                    <h4 className="text-xs font-medium text-gray-600">
+                      Ingredientes agregados:
+                    </h4>
+                    {form.ingredientes.map((ing, idx) => {
+                      const ingrediente = ingredientes.find(
+                        (i) => i.id === ing.ingrediente_id
+                      );
+                      return (
+                        <div
+                          key={idx}
+                          className="flex items-center justify-between bg-gray-50 p-2 rounded text-sm"
+                        >
+                          <span>
+                            {ingrediente?.nombre} - {ing.cantidad}
+                          </span>
+                          <button
+                            onClick={() => handleQuitarIngrediente(idx)}
+                            className="text-red-600 hover:bg-red-50 p-1 rounded"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              <Button className="w-full" onClick={handleGuardar}>
+                Guardar Receta
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {loading ? (
@@ -84,30 +338,38 @@ export default function RecetasPage() {
               <div className="space-y-4 p-6">
                 <div>
                   <h2 className="text-xl font-semibold">{receta.nombre}</h2>
-                  {receta.descripcion && (
-                    <p className="text-sm text-gray-500">{receta.descripcion}</p>
+                  {receta.procedimiento && (
+                    <p className="text-sm text-gray-500 line-clamp-2">
+                      {receta.procedimiento}
+                    </p>
                   )}
                 </div>
 
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between text-sm">
                   <div>
-                    <p className="text-xs text-gray-500">Costo por porción</p>
+                    <p className="text-xs text-gray-500">Costo Total</p>
                     <p className="font-semibold text-orange-600">
-                      ${receta.costo_por_porcion.toFixed(2)}
+                      ${receta.costo_total_calculado.toFixed(2)}
                     </p>
                   </div>
                   <div>
                     <p className="text-xs text-gray-500">Porciones</p>
-                    <p className="font-semibold">{receta.porciones}</p>
+                    <p className="font-semibold">{receta.rendimiento_porciones}</p>
                   </div>
                 </div>
+
+                {receta.ingredientes.length > 0 && (
+                  <div className="text-xs text-gray-600">
+                    {receta.ingredientes.length} ingredientes
+                  </div>
+                )}
 
                 <div className="flex gap-2">
                   <Link
                     href={`/chef/recipes/${receta.id}`}
                     className="flex-1 rounded-2xl border border-gray-200 py-3 text-center text-sm font-medium hover:bg-gray-50"
                   >
-                    Ver Receta
+                    Ver Detalle
                   </Link>
                   <button
                     onClick={() => {
