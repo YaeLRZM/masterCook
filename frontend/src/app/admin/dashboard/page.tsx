@@ -4,6 +4,15 @@ import PageHeader from "@/components/common/PageHeader";
 import { Card, CardContent } from "@/components/ui/card";
 import { Users, UserCheck } from "lucide-react";
 import { useEffect, useState } from "react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 
 function StatCard({
   title,
@@ -32,15 +41,21 @@ function StatCard({
 export default function AdminDashboardPage() {
   const [staffCount, setStaffCount] = useState(0);
   const [activeCount, setActiveCount] = useState(0);
+  const [auditorias, setAuditorias] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const loadData = async () => {
       try {
         const { getPersonal } = await import("@/features/personal/services/personal.service");
+        const { getAuditorias } = await import("@/features/dashboard/services/dashboard.service");
+
         const staff = await getPersonal();
         setStaffCount(staff.length);
         setActiveCount(staff.filter((s) => s.status === "ACTIVE").length);
+
+        const audits = await getAuditorias();
+        setAuditorias(audits);
       } catch (error) {
         console.error("Error cargando dashboard:", error);
       } finally {
@@ -74,12 +89,63 @@ export default function AdminDashboardPage() {
 
       <Card className="rounded-3xl border-0 shadow-sm">
         <CardContent className="p-6">
-          <h2 className="text-lg font-semibold">
-            Información de la Empresa
+          <h2 className="text-lg font-semibold mb-4">
+            Auditoría de Actividades
           </h2>
-          <p className="mt-4 text-sm text-gray-600">
-            Aquí se mostrarán los datos de tu empresa.
+          <p className="mb-4 text-sm text-gray-600">
+            Últimas 50 actividades registradas en tu empresa
           </p>
+
+          {auditorias.length === 0 ? (
+            <div className="py-8 text-center text-gray-500">
+              No hay actividades registradas aún.
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Fecha</TableHead>
+                    <TableHead>Usuario</TableHead>
+                    <TableHead>Acción</TableHead>
+                    <TableHead>Tabla</TableHead>
+                    <TableHead>Descripción</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {auditorias.map((audit) => (
+                    <TableRow key={audit.id}>
+                      <TableCell className="whitespace-nowrap text-sm">
+                        {new Date(audit.creado_en).toLocaleDateString()} {new Date(audit.creado_en).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </TableCell>
+                      <TableCell className="text-sm">
+                        ID: {audit.hecho_por}
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={
+                            audit.tipo_movimiento === "INSERT"
+                              ? "default"
+                              : audit.tipo_movimiento === "UPDATE"
+                              ? "secondary"
+                              : "destructive"
+                          }
+                        >
+                          {audit.tipo_movimiento}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-sm">
+                        {audit.nombre_tabla}
+                      </TableCell>
+                      <TableCell className="text-sm max-w-md truncate">
+                        {audit.descripcion || "—"}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

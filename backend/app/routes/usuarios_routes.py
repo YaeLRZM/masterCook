@@ -36,6 +36,8 @@ from app.schemas.usuario_schema import (
     UsuarioSalida,
     UsuarioStaffCrear,
 )
+from app.schemas.auditoria_schema import AuditoriaSalida
+from app.models.auditoria import Auditoria
 
 
 router = APIRouter(prefix="/usuarios", tags=["Personal"])
@@ -300,3 +302,20 @@ def crear_rol(
     db.commit()
     db.refresh(rol)
     return rol
+
+
+# --- Auditorías ---------------------------------------------------------------
+
+@router.get("/auditorias/", response_model=List[AuditoriaSalida])
+def listar_auditorias(
+    db: Session = Depends(get_db),
+    empresa_id: int = Depends(obtener_empresa_actual_id),
+    _=Depends(solo_admin),
+):
+    """Lista las auditorías de la empresa actual (últimas 50)."""
+    return db.execute(
+        select(Auditoria)
+        .where(Auditoria.empresa_id == empresa_id)
+        .order_by(Auditoria.creado_en.desc())
+        .limit(50)
+    ).scalars().all()
