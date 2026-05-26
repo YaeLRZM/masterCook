@@ -46,6 +46,10 @@ class UsuarioActualizar(BaseModel):
     activo: Optional[bool] = None
 
 
+class CambiarContraseña(BaseModel):
+    new_password: str = Field(min_length=6, max_length=120)
+
+
 # ---- Bootstrap del ADMIN de una empresa (lo hace el SUPER_ADMIN) ---------
 
 class AdminEmpresaCrear(BaseModel):

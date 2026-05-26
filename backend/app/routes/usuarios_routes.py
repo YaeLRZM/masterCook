@@ -31,6 +31,7 @@ from app.models.usuario_rol import UsuarioRol
 
 from app.schemas.rol_schema import RolCrear, RolSalida
 from app.schemas.usuario_schema import (
+    CambiarContraseña,
     UsuarioActualizar,
     UsuarioConRolesSalida,
     UsuarioSalida,
@@ -43,6 +44,11 @@ from app.models.auditoria import Auditoria
 router = APIRouter(prefix="/usuarios", tags=["Personal"])
 
 solo_admin = requiere_roles(["ADMIN", "SUPER_ADMIN"])
+
+
+@router.options("/{usuario_id}/cambiar-contraseña")
+def options_cambiar_contraseña():
+    return {}
 
 
 def _rol_asignable_o_404(db: Session, rol_id: int) -> Rol:
@@ -178,6 +184,22 @@ def actualizar_personal(
     usuario = obtener_objeto_del_tenant(db, Usuario, usuario_id, empresa_id)
     for campo, valor in payload.model_dump(exclude_unset=True).items():
         setattr(usuario, campo, valor)
+    db.add(usuario)
+    db.commit()
+    db.refresh(usuario)
+    return _serializar(db, usuario)
+
+
+@router.post("/{usuario_id}/cambiar-contraseña", response_model=UsuarioConRolesSalida)
+def cambiar_contraseña(
+    usuario_id: int,
+    payload: CambiarContraseña,
+    db: Session = Depends(get_db),
+    empresa_id: int = Depends(obtener_empresa_actual_id),
+    _=Depends(solo_admin),
+):
+    usuario = obtener_objeto_del_tenant(db, Usuario, usuario_id, empresa_id)
+    usuario.password_hash = hashear_password(payload.new_password)
     db.add(usuario)
     db.commit()
     db.refresh(usuario)

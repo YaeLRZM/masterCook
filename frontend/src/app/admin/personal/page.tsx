@@ -8,8 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Plus, Search, Eye, EyeOff } from "lucide-react";
-import { getPersonal, createPersonal, disablePersonal, getAssignableRoles } from "@/features/personal/services/personal.service";
+import { Plus, Search, Eye, EyeOff, Edit2 } from "lucide-react";
+import { getPersonal, createPersonal, disablePersonal, getAssignableRoles, changePassword } from "@/features/personal/services/personal.service";
 import { useAuthStore } from "@/features/auth/store/auth.store";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -32,8 +32,12 @@ export default function PersonalPage() {
   const [staff, setStaff] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
+  const [openChangePassword, setOpenChangePassword] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [roles, setRoles] = useState<any[]>([]);
+  const [editingUser, setEditingUser] = useState<any>(null);
+  const [newPassword, setNewPassword] = useState("");
+  const [showNewPassword, setShowNewPassword] = useState(false);
   const [form, setForm] = useState({
     nombre_login: "",
     email: "",
@@ -110,6 +114,32 @@ export default function PersonalPage() {
     } catch (error) {
       console.error("Error desactivando personal:", error);
       alert("Error desactivando personal");
+    }
+  };
+
+  const handleEditPassword = (user: any) => {
+    setEditingUser(user);
+    setNewPassword("");
+    setOpenChangePassword(true);
+  };
+
+  const handleChangePassword = async () => {
+    if (!newPassword) {
+      alert("Ingresa una nueva contraseña");
+      return;
+    }
+    try {
+      await changePassword(editingUser.id, newPassword);
+      alert("Contraseña actualizada correctamente");
+      setOpenChangePassword(false);
+      setEditingUser(null);
+      setNewPassword("");
+      await loadStaff();
+    } catch (error: any) {
+      console.error("Error cambiando contraseña:", error);
+      const message =
+        error?.response?.data?.detail ?? error?.message ?? "Error al cambiar la contraseña";
+      alert(message);
     }
   };
 
@@ -248,6 +278,52 @@ export default function PersonalPage() {
             </div>
           </DialogContent>
         </Dialog>
+
+        <Dialog open={openChangePassword} onOpenChange={setOpenChangePassword}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Cambiar Contraseña - {editingUser?.fullName}</DialogTitle>
+            </DialogHeader>
+
+            <div className="space-y-4">
+              <div className="relative">
+                <Input
+                  placeholder="Nueva contraseña"
+                  type={showNewPassword ? "text" : "password"}
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowNewPassword(!showNewPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                >
+                  {showNewPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
+              </div>
+
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => setOpenChangePassword(false)}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  className="flex-1"
+                  onClick={handleChangePassword}
+                >
+                  Guardar
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
@@ -333,13 +409,23 @@ export default function PersonalPage() {
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      <Button
-                        size="sm"
-                        variant="destructive"
-                        onClick={() => handleDisable(member.id)}
-                      >
-                        Desactivar
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleEditPassword(member)}
+                        >
+                          <Edit2 className="h-4 w-4 mr-1" />
+                          Editar
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => handleDisable(member.id)}
+                        >
+                          Desactivar
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))

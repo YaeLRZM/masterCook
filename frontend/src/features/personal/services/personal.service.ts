@@ -111,3 +111,10 @@ export async function createRole(payload: {
   });
   return data;
 }
+
+export async function changePassword(userId: number, newPassword: string) {
+  const { data } = await api.post(`/usuarios/${userId}/cambiar-contraseña`, {
+    new_password: newPassword,
+  });
+  return data;
+}

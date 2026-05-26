@@ -30,11 +30,11 @@ export const rolePermissions: Record<Role, Permission[]> = {
     Permission.VIEW_INGREDIENTS,
   ],
 
-  [Role.AUXILIAR]: [
+  [Role.AYUDANTE_CHEF]: [
     Permission.VIEW_RECIPES,
   ],
 
-  [Role.SALES]: [
+  [Role.VENDEDOR]: [
     Permission.CREATE_EVENT,
     Permission.UPDATE_EVENT,
     Permission.VIEW_EVENTS,

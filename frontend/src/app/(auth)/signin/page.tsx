@@ -60,13 +60,13 @@ export default function SignInPage() {
           router.push("/chef/recipes");
           break;
 
-        case Role.AUXILIAR:
+        case Role.AYUDANTE_CHEF:
           router.push(
             "/auxiliar/recipes"
           );
           break;
 
-        case Role.SALES:
+        case Role.VENDEDOR:
           router.push("/sales/events");
           break;
 

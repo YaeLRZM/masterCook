@@ -36,8 +36,8 @@ const ROLE_PRIORITY: Role[] = [
   Role.SUPER_ADMIN,
   Role.ADMIN,
   Role.CHEF,
-  Role.AUXILIAR,
-  Role.SALES,
+  Role.AYUDANTE_CHEF,
+  Role.VENDEDOR,
 ];
 
 function pickPrimaryRole(roles: Role[]): Role | null {
