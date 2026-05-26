@@ -8,11 +8,13 @@ import {
   Edit2,
   AlertCircle,
   Upload,
+  Package,
 } from "lucide-react";
 import {
   getIngredientes,
   deleteIngrediente,
   createIngrediente,
+  updateIngrediente,
   type Ingrediente,
 } from "@/features/chef/services/ingredientes.service";
 import {
@@ -34,6 +36,7 @@ export default function IngredientesPage() {
   const [unidades, setUnidades] = useState<UnidadMedida[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
+  const [editingId, setEditingId] = useState<number | null>(null);
   const [form, setForm] = useState({
     nombre: "",
     costo_base: 0,
@@ -71,34 +74,71 @@ export default function IngredientesPage() {
     }
 
     try {
-      await createIngrediente({
-        nombre: form.nombre,
-        costo_base: form.costo_base,
-        unidad_medida_id: form.unidad_medida_id,
-        peso_bruto: form.peso_bruto,
-        peso_neto: form.peso_neto,
-        stock: form.stock,
-        stock_minimo: form.stock_minimo,
-        imagen_url: form.imagen_url || undefined,
-      });
+      if (editingId) {
+        await updateIngrediente(editingId, {
+          nombre: form.nombre,
+          costo_base: form.costo_base,
+          unidad_medida_id: form.unidad_medida_id,
+          peso_bruto: form.peso_bruto,
+          peso_neto: form.peso_neto,
+          stock: form.stock,
+          stock_minimo: form.stock_minimo,
+          imagen_url: form.imagen_url || undefined,
+        });
+      } else {
+        await createIngrediente({
+          nombre: form.nombre,
+          costo_base: form.costo_base,
+          unidad_medida_id: form.unidad_medida_id,
+          peso_bruto: form.peso_bruto,
+          peso_neto: form.peso_neto,
+          stock: form.stock,
+          stock_minimo: form.stock_minimo,
+          imagen_url: form.imagen_url || undefined,
+        });
+      }
 
-      setForm({
-        nombre: "",
-        costo_base: 0,
-        unidad_medida_id: 1,
-        peso_bruto: 0,
-        peso_neto: 0,
-        stock: 0,
-        stock_minimo: 0,
-        imagen_url: "",
-      });
-
+      resetForm();
       setOpen(false);
       await cargarIngredientes();
     } catch (error) {
       console.error("Error guardando ingrediente:", error);
       alert("Error al guardar el ingrediente");
     }
+  };
+
+  const handleEditar = (ingrediente: Ingrediente) => {
+    setForm({
+      nombre: ingrediente.nombre,
+      costo_base: ingrediente.costo_base,
+      unidad_medida_id: ingrediente.unidad_medida_id || 1,
+      peso_bruto: ingrediente.peso_bruto,
+      peso_neto: ingrediente.peso_neto,
+      stock: ingrediente.stock,
+      stock_minimo: ingrediente.stock_minimo,
+      imagen_url: ingrediente.imagen_url || "",
+    });
+    setEditingId(ingrediente.id);
+    setOpen(true);
+  };
+
+  const resetForm = () => {
+    setForm({
+      nombre: "",
+      costo_base: 0,
+      unidad_medida_id: 1,
+      peso_bruto: 0,
+      peso_neto: 0,
+      stock: 0,
+      stock_minimo: 0,
+      imagen_url: "",
+    });
+    setEditingId(null);
+  };
+
+  const handleOpenDialog = () => {
+    resetForm();
+    setOpen(true);
   };
 
   const handleEliminar = async (id: number) => {
@@ -121,9 +161,12 @@ export default function IngredientesPage() {
           description="Administra todos los ingredientes del inventario"
         />
 
-        <Dialog open={open} onOpenChange={setOpen}>
+        <Dialog open={open} onOpenChange={(newOpen) => {
+          if (!newOpen) resetForm();
+          setOpen(newOpen);
+        }}>
           <DialogTrigger asChild>
-            <Button className="rounded-xl">
+            <Button className="rounded-xl bg-orange-600 hover:bg-orange-700">
               <Plus className="mr-2 h-4 w-4" />
               Nuevo Ingrediente
             </Button>
@@ -131,7 +174,7 @@ export default function IngredientesPage() {
 
           <DialogContent className="max-h-[90vh] overflow-y-auto max-w-2xl">
             <DialogHeader>
-              <DialogTitle>Agregar Ingrediente</DialogTitle>
+              <DialogTitle>{editingId ? "Editar Ingrediente" : "Agregar Ingrediente"}</DialogTitle>
             </DialogHeader>
 
             <div className="space-y-4">
@@ -256,82 +299,72 @@ export default function IngredientesPage() {
           <p>No hay ingredientes registrados</p>
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-3xl border border-gray-200 bg-white shadow-sm">
-          <table className="w-full">
-            <thead className="border-b border-gray-200 bg-gray-50">
-              <tr>
-                <th className="px-6 py-4 text-left text-sm font-semibold">
-                  Imagen
-                </th>
-                <th className="px-6 py-4 text-left text-sm font-semibold">
-                  Nombre
-                </th>
-                <th className="px-6 py-4 text-left text-sm font-semibold">
-                  Costo Base
-                </th>
-                <th className="px-6 py-4 text-left text-sm font-semibold">
-                  Merma %
-                </th>
-                <th className="px-6 py-4 text-left text-sm font-semibold">
-                  Stock
-                </th>
-                <th className="px-6 py-4 text-left text-sm font-semibold">
-                  Acciones
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {ingredientes.map((ingrediente) => (
-                <tr
-                  key={ingrediente.id}
-                  className="border-b border-gray-100 hover:bg-gray-50"
-                >
-                  <td className="px-6 py-4">
-                    {ingrediente.imagen_url ? (
-                      <img
-                        src={ingrediente.imagen_url}
-                        alt={ingrediente.nombre}
-                        className="h-10 w-10 rounded object-cover"
-                      />
-                    ) : (
-                      <div className="h-10 w-10 rounded bg-gray-200 flex items-center justify-center">
-                        <Upload className="h-4 w-4 text-gray-400" />
-                      </div>
-                    )}
-                  </td>
-                  <td className="px-6 py-4 text-sm font-medium">
-                    {ingrediente.nombre}
-                  </td>
-                  <td className="px-6 py-4 text-sm font-semibold text-orange-600">
-                    ${ingrediente.costo_base.toFixed(2)}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-600">
-                    {ingrediente.merma_porcentaje.toFixed(1)}%
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-600">
-                    {ingrediente.stock.toFixed(2)}
-                  </td>
-                  <td className="px-6 py-4 text-sm">
-                    <div className="flex gap-2">
-                      <button
-                        className="rounded-lg border border-orange-200 p-2 text-orange-600 hover:bg-orange-50"
-                        title="Editar"
-                      >
-                        <Edit2 className="h-4 w-4" />
-                      </button>
-                      <button
-                        onClick={() => handleEliminar(ingrediente.id)}
-                        className="rounded-lg border border-red-200 p-2 text-red-600 hover:bg-red-50"
-                        title="Eliminar"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {ingredientes.map((ingrediente) => (
+            <div
+              key={ingrediente.id}
+              className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm hover:shadow-md transition-shadow"
+            >
+              <div className="h-40 bg-gradient-to-br from-orange-100 to-orange-50 flex items-center justify-center overflow-hidden">
+                {ingrediente.imagen_url ? (
+                  <img
+                    src={ingrediente.imagen_url}
+                    alt={ingrediente.nombre}
+                    className="h-full w-full object-cover"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).style.display = "none";
+                      (e.currentTarget.parentElement?.querySelector(".fallback-icon") as HTMLElement).style.display = "flex";
+                    }}
+                  />
+                ) : null}
+                <div className="fallback-icon flex items-center justify-center h-full w-full absolute">
+                  <Package className="h-12 w-12 text-orange-300" />
+                </div>
+              </div>
+
+              <div className="p-4 space-y-3">
+                <div>
+                  <h3 className="font-semibold text-gray-900 truncate">{ingrediente.nombre}</h3>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div className="bg-orange-50 p-2 rounded">
+                    <p className="text-xs text-gray-600">Costo Base</p>
+                    <p className="font-semibold text-orange-600">${ingrediente.costo_base.toFixed(2)}</p>
+                  </div>
+                  <div className="bg-blue-50 p-2 rounded">
+                    <p className="text-xs text-gray-600">Merma</p>
+                    <p className="font-semibold text-blue-600">{ingrediente.merma_porcentaje.toFixed(1)}%</p>
+                  </div>
+                  <div className="bg-green-50 p-2 rounded">
+                    <p className="text-xs text-gray-600">Stock</p>
+                    <p className="font-semibold text-green-600">{ingrediente.stock.toFixed(2)}</p>
+                  </div>
+                  <div className="bg-gray-50 p-2 rounded">
+                    <p className="text-xs text-gray-600">Mínimo</p>
+                    <p className="font-semibold text-gray-600">{ingrediente.stock_minimo.toFixed(2)}</p>
+                  </div>
+                </div>
+
+                <div className="flex gap-2 pt-2">
+                  <button
+                    onClick={() => handleEditar(ingrediente)}
+                    className="flex-1 rounded-lg bg-orange-100 py-2 text-sm font-medium text-orange-600 hover:bg-orange-200 transition-colors"
+                  >
+                    <Edit2 className="h-4 w-4 inline mr-1" />
+                    Editar
+                  </button>
+                  <button
+                    onClick={() => handleEliminar(ingrediente.id)}
+                    className="flex-1 rounded-lg bg-red-100 py-2 text-sm font-medium text-red-600 hover:bg-red-200 transition-colors"
+                  >
+                    <Trash2 className="h-4 w-4 inline mr-1" />
+                    Eliminar
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       )}
     </div>

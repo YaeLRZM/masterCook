@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import PageHeader from "@/components/common/PageHeader";
-import { Plus, ChefHat, Edit2, Trash2, X } from "lucide-react";
-import { getRecetas, deleteReceta, createReceta, type Receta } from "@/features/chef/services/recetas.service";
+import { Plus, ChefHat, Edit2, Trash2, X, Clock, Users } from "lucide-react";
+import { getRecetas, deleteReceta, createReceta, updateReceta, type Receta } from "@/features/chef/services/recetas.service";
 import { getIngredientes, type Ingrediente } from "@/features/chef/services/ingredientes.service";
 import { getUnidadesMedida, type UnidadMedida } from "@/features/chef/services/unidades.service";
 import {
@@ -23,6 +23,7 @@ export default function RecetasPage() {
   const [unidades, setUnidades] = useState<UnidadMedida[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
+  const [editingId, setEditingId] = useState<number | null>(null);
   const [form, setForm] = useState({
     nombre: "",
     procedimiento: "",
@@ -84,6 +85,22 @@ export default function RecetasPage() {
     });
   };
 
+  const resetForm = () => {
+    setForm({
+      nombre: "",
+      procedimiento: "",
+      rendimiento_porciones: 1,
+      es_subreceta: false,
+      ingredientes: [],
+    });
+    setEditingId(null);
+    setNuevoIngrediente({
+      ingrediente_id: 0,
+      unidad_medida_id: 1,
+      cantidad: 0,
+    });
+  };
+
   const handleGuardar = async () => {
     if (!form.nombre || form.rendimiento_porciones <= 0) {
       alert("Por favor completa los datos requeridos");
@@ -91,28 +108,43 @@ export default function RecetasPage() {
     }
 
     try {
-      await createReceta({
-        nombre: form.nombre,
-        procedimiento: form.procedimiento,
-        rendimiento_porciones: form.rendimiento_porciones,
-        es_subreceta: form.es_subreceta,
-        ingredientes: form.ingredientes,
-      });
+      if (editingId) {
+        await updateReceta(editingId, {
+          nombre: form.nombre,
+          procedimiento: form.procedimiento,
+          rendimiento_porciones: form.rendimiento_porciones,
+          es_subreceta: form.es_subreceta,
+          ingredientes: form.ingredientes,
+        });
+      } else {
+        await createReceta({
+          nombre: form.nombre,
+          procedimiento: form.procedimiento,
+          rendimiento_porciones: form.rendimiento_porciones,
+          es_subreceta: form.es_subreceta,
+          ingredientes: form.ingredientes,
+        });
+      }
 
-      setForm({
-        nombre: "",
-        procedimiento: "",
-        rendimiento_porciones: 1,
-        es_subreceta: false,
-        ingredientes: [],
-      });
-
+      resetForm();
       setOpen(false);
       await cargarDatos();
     } catch (error) {
       console.error("Error guardando receta:", error);
       alert("Error al guardar la receta");
     }
+  };
+
+  const handleEditar = (receta: Receta) => {
+    setForm({
+      nombre: receta.nombre,
+      procedimiento: receta.procedimiento,
+      rendimiento_porciones: receta.rendimiento_porciones,
+      es_subreceta: receta.es_subreceta || false,
+      ingredientes: receta.ingredientes || [],
+    });
+    setEditingId(receta.id);
+    setOpen(true);
   };
 
   const handleEliminar = async (id: number) => {
@@ -135,9 +167,12 @@ export default function RecetasPage() {
           description="Administra todas las recetas de la cocina"
         />
 
-        <Dialog open={open} onOpenChange={setOpen}>
+        <Dialog open={open} onOpenChange={(newOpen) => {
+          if (!newOpen) resetForm();
+          setOpen(newOpen);
+        }}>
           <DialogTrigger asChild>
-            <Button className="rounded-xl">
+            <Button className="rounded-xl bg-orange-600 hover:bg-orange-700">
               <Plus className="mr-2 h-4 w-4" />
               Nueva Receta
             </Button>
@@ -145,7 +180,7 @@ export default function RecetasPage() {
 
           <DialogContent className="max-h-[90vh] overflow-y-auto max-w-2xl">
             <DialogHeader>
-              <DialogTitle>Crear Nueva Receta</DialogTitle>
+              <DialogTitle>{editingId ? "Editar Receta" : "Crear Nueva Receta"}</DialogTitle>
             </DialogHeader>
 
             <div className="space-y-4">
@@ -326,72 +361,71 @@ export default function RecetasPage() {
           <p className="text-gray-500">No hay recetas registradas</p>
         </div>
       ) : (
-        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {recetas.map((receta) => (
             <div
               key={receta.id}
-              className="overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-md"
+              className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm hover:shadow-lg transition-shadow"
             >
-              <div className="flex h-44 items-center justify-center bg-gradient-to-br from-orange-100 to-orange-50">
+              <div className="h-44 bg-gradient-to-br from-orange-100 to-orange-50 flex items-center justify-center overflow-hidden relative">
                 {receta.imagen_url ? (
                   <img
                     src={receta.imagen_url}
                     alt={receta.nombre}
                     className="h-full w-full object-cover"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).style.display = "none";
+                      (e.currentTarget.parentElement?.querySelector(".fallback-icon") as HTMLElement).style.display = "flex";
+                    }}
                   />
-                ) : (
-                  <ChefHat className="h-16 w-16 text-orange-400" />
-                )}
+                ) : null}
+                <div className="fallback-icon flex items-center justify-center h-full w-full absolute">
+                  <ChefHat className="h-16 w-16 text-orange-300" />
+                </div>
               </div>
 
-              <div className="space-y-4 p-6">
+              <div className="p-5 space-y-4">
                 <div>
-                  <h2 className="text-xl font-semibold">{receta.nombre}</h2>
+                  <h2 className="text-lg font-semibold text-gray-900 line-clamp-1">{receta.nombre}</h2>
                   {receta.procedimiento && (
-                    <p className="text-sm text-gray-500 line-clamp-2">
+                    <p className="text-xs text-gray-500 line-clamp-2 mt-1">
                       {receta.procedimiento}
                     </p>
                   )}
                 </div>
 
-                <div className="flex items-center justify-between text-sm">
-                  <div>
-                    <p className="text-xs text-gray-500">Costo Total</p>
-                    <p className="font-semibold text-orange-600">
-                      ${receta.costo_total_calculado.toFixed(2)}
-                    </p>
+                <div className="grid grid-cols-3 gap-2 text-sm">
+                  <div className="bg-orange-50 p-2 rounded text-center">
+                    <p className="text-xs text-gray-600">Costo</p>
+                    <p className="font-semibold text-orange-600 text-sm">${receta.costo_total_calculado.toFixed(2)}</p>
                   </div>
-                  <div>
-                    <p className="text-xs text-gray-500">Porciones</p>
-                    <p className="font-semibold">{receta.rendimiento_porciones}</p>
+                  <div className="bg-blue-50 p-2 rounded text-center">
+                    <Users className="h-4 w-4 mx-auto text-blue-600 mb-1" />
+                    <p className="font-semibold text-blue-600 text-sm">{receta.rendimiento_porciones}</p>
+                  </div>
+                  <div className="bg-green-50 p-2 rounded text-center">
+                    <p className="text-xs text-gray-600">{receta.ingredientes?.length || 0}</p>
+                    <p className="font-semibold text-green-600 text-xs">ingredientes</p>
                   </div>
                 </div>
 
-                {receta.ingredientes.length > 0 && (
-                  <div className="text-xs text-gray-600">
-                    {receta.ingredientes.length} ingredientes
-                  </div>
-                )}
-
-                <div className="flex gap-2">
+                <div className="flex gap-2 pt-2">
                   <Link
                     href={`/chef/recipes/${receta.id}`}
-                    className="flex-1 rounded-2xl border border-gray-200 py-3 text-center text-sm font-medium hover:bg-gray-50"
+                    className="flex-1 rounded-lg bg-blue-100 py-2 text-center text-sm font-medium text-blue-600 hover:bg-blue-200 transition-colors"
                   >
                     Ver Detalle
                   </Link>
                   <button
-                    onClick={() => {
-                      /* TODO: Implementar edición */
-                    }}
-                    className="rounded-2xl border border-orange-200 p-3 text-orange-600 hover:bg-orange-50"
-                    title="Editar"
+                    onClick={() => handleEditar(receta)}
+                    className="flex-1 rounded-lg bg-orange-100 py-2 text-sm font-medium text-orange-600 hover:bg-orange-200 transition-colors"
                   >
-                    <Edit2 className="h-4 w-4" />
+                    <Edit2 className="h-4 w-4 inline mr-1" />
+                    Editar
                   </button>
                   <button
                     onClick={() => handleEliminar(receta.id)}
-                    className="rounded-2xl border border-red-200 p-3 text-red-600 hover:bg-red-50"
+                    className="rounded-lg bg-red-100 px-3 py-2 text-red-600 hover:bg-red-200 transition-colors"
                     title="Eliminar"
                   >
                     <Trash2 className="h-4 w-4" />
