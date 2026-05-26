@@ -11,7 +11,7 @@ export default function Navbar() {
     <header className="flex h-16 items-center justify-between border-b border-gray-200 bg-white px-8">
       <div>
         <h2 className="text-sm font-medium text-gray-500">
-          Kitchen Operations
+          Operaciones de Cocina
         </h2>
       </div>
 
@@ -24,7 +24,7 @@ export default function Navbar() {
         >
           <LogOut className="h-4 w-4" />
 
-          Logout
+          Cerrar Sesión
         </button>
 
         {/* USER */}

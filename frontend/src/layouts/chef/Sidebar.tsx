@@ -13,18 +13,16 @@ import {
 
 const links = [
   {
-    label: "Recipes",
+    label: "Recetas",
     href: "/chef/recipes",
     icon: BookOpen,
   },
 
   {
-    label: "Ingredients",
+    label: "Ingredientes",
     href: "/chef/ingredients",
     icon: Package,
   },
-
- 
 ];
 
 export default function Sidebar() {
@@ -41,11 +39,11 @@ export default function Sidebar() {
 
         <div>
           <h1 className="text-lg font-bold">
-            Chef Panel
+            Panel Chef
           </h1>
 
           <p className="text-xs text-gray-500">
-            Kitchen management
+            Gestión de cocina
           </p>
         </div>
       </div>
