@@ -1,99 +1,202 @@
-import {
-  ChefHat,
-  Clock3,
-} from "lucide-react";
+"use client";
 
-const recipes = [
-  {
-    id: 1,
-    name: "Risotto de Champiñones",
-    time: "45 min",
-    steps: [
-      "Calentar caldo.",
-      "Saltear champiñones.",
-      "Agregar arroz arborio.",
-      "Añadir parmesano.",
-    ],
-  },
-
-  {
-    id: 2,
-    name: "Cheesecake",
-    time: "60 min",
-    steps: [
-      "Preparar base.",
-      "Mezclar queso crema.",
-      "Hornear.",
-      "Refrigerar.",
-    ],
-  },
-];
+import { useEffect, useState } from "react";
+import { ChefHat, CheckCircle2, Circle } from "lucide-react";
+import { getRecetas, type Receta } from "@/features/chef/services/recetas.service";
+import { API_URL } from "@/lib/axios";
 
 export default function AuxiliarRecipesPage() {
+  const [recetas, setRecetas] = useState<Receta[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [completedSteps, setCompletedSteps] = useState<Record<number, boolean[]>>({});
+
+  useEffect(() => {
+    cargarRecetas();
+  }, []);
+
+  const cargarRecetas = async () => {
+    try {
+      const data = await getRecetas();
+      setRecetas(data);
+      // Inicializar pasos como no completados
+      const steps: Record<number, boolean[]> = {};
+      data.forEach((receta) => {
+        if (receta.procedimiento) {
+          const pasos = receta.procedimiento
+            .split("\n")
+            .filter((p) => p.trim().length > 0);
+          steps[receta.id] = new Array(pasos.length).fill(false);
+        }
+      });
+      setCompletedSteps(steps);
+    } catch (error) {
+      console.error("Error cargando recetas:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const toggleStep = (recetaId: number, stepIndex: number) => {
+    setCompletedSteps((prev) => {
+      const newSteps = [...(prev[recetaId] || [])];
+      newSteps[stepIndex] = !newSteps[stepIndex];
+      return {
+        ...prev,
+        [recetaId]: newSteps,
+      };
+    });
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <p className="text-gray-500">Cargando recetas...</p>
+      </div>
+    );
+  }
+
+  if (recetas.length === 0) {
+    return (
+      <div className="space-y-8">
+        <div>
+          <h1 className="text-3xl font-bold">Recetas de Cocina</h1>
+          <p className="mt-2 text-gray-500">
+            Sigue las instrucciones paso a paso
+          </p>
+        </div>
+        <div className="text-center py-12 text-gray-500">
+          No hay recetas disponibles
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8">
       {/* HEADER */}
-
       <div>
-        <h1 className="text-3xl font-bold">
-          Kitchen Recipes
-        </h1>
-
+        <h1 className="text-3xl font-bold">Recetas de Cocina</h1>
         <p className="mt-2 text-gray-500">
-          Follow step-by-step instructions
+          Sigue las instrucciones paso a paso
         </p>
       </div>
 
       {/* RECIPES */}
+      <div className="grid gap-8 lg:grid-cols-2">
+        {recetas.map((receta) => {
+          const pasos = receta.procedimiento
+            ? receta.procedimiento
+                .split("\n")
+                .filter((p) => p.trim().length > 0)
+            : [];
+          const completados = completedSteps[receta.id] || [];
+          const progreso =
+            pasos.length > 0
+              ? Math.round(
+                  (completados.filter(Boolean).length / pasos.length) * 100
+                )
+              : 0;
 
-      <div className="grid gap-8 xl:grid-cols-2">
-        {recipes.map((recipe) => (
-          <div
-            key={recipe.id}
-            className="rounded-3xl border border-gray-200 bg-white p-8 shadow-sm"
-          >
-            {/* TOP */}
+          return (
+            <div
+              key={receta.id}
+              className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow"
+            >
+              {/* Imagen */}
+              <div className="relative h-48 bg-gradient-to-br from-orange-100 to-orange-50 flex items-center justify-center overflow-hidden">
+                {receta.imagen_url ? (
+                  <img
+                    src={`${API_URL}${receta.imagen_url}`}
+                    alt={receta.nombre}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <ChefHat className="h-16 w-16 text-orange-300" />
+                )}
+              </div>
 
-            <div className="mb-6 flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-100">
-                  <ChefHat className="h-7 w-7 text-blue-600" />
-                </div>
-
+              {/* Contenido */}
+              <div className="p-6 space-y-4">
+                {/* Titulo y info basica */}
                 <div>
-                  <h2 className="text-xl font-semibold">
-                    {recipe.name}
+                  <h2 className="text-2xl font-bold text-gray-900">
+                    {receta.nombre}
                   </h2>
-
-                  <div className="mt-1 flex items-center gap-2 text-sm text-gray-500">
-                    <Clock3 className="h-4 w-4" />
-
-                    {recipe.time}
+                  <div className="mt-2 flex gap-4 text-sm text-gray-600">
+                    <div>
+                      <span className="font-semibold text-gray-900">
+                        {receta.rendimiento_porciones}
+                      </span>{" "}
+                      porciones
+                    </div>
+                    <div>
+                      <span className="font-semibold text-gray-900">
+                        {pasos.length}
+                      </span>{" "}
+                      pasos
+                    </div>
                   </div>
                 </div>
+
+                {/* Progreso */}
+                {pasos.length > 0 && (
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-xs font-medium text-gray-600">
+                      <span>Progreso</span>
+                      <span>{progreso}%</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div
+                        className="bg-orange-500 h-2 rounded-full transition-all"
+                        style={{ width: `${progreso}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Pasos */}
+                {pasos.length > 0 && (
+                  <div className="space-y-3 border-t pt-4">
+                    <h3 className="font-semibold text-gray-900 text-sm">
+                      Pasos
+                    </h3>
+                    <div className="space-y-2 max-h-64 overflow-y-auto">
+                      {pasos.map((paso, idx) => (
+                        <button
+                          key={idx}
+                          onClick={() => toggleStep(receta.id, idx)}
+                          className="w-full flex items-start gap-3 p-2 hover:bg-gray-50 rounded-lg transition-colors text-left"
+                        >
+                          {completados[idx] ? (
+                            <CheckCircle2 className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
+                          ) : (
+                            <Circle className="h-5 w-5 text-gray-300 flex-shrink-0 mt-0.5" />
+                          )}
+                          <span
+                            className={`text-sm ${
+                              completados[idx]
+                                ? "text-gray-400 line-through"
+                                : "text-gray-700"
+                            }`}
+                          >
+                            {paso.trim()}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Sin procedimiento */}
+                {pasos.length === 0 && (
+                  <div className="text-sm text-gray-500 text-center py-4">
+                    Sin procedimiento definido
+                  </div>
+                )}
               </div>
             </div>
-
-            {/* STEPS */}
-
-            <div className="space-y-4">
-              {recipe.steps.map((step, index) => (
-                <div
-                  key={index}
-                  className="flex gap-4 rounded-2xl border border-gray-100 bg-slate-50 p-4"
-                >
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-500 text-sm font-semibold text-white">
-                    {index + 1}
-                  </div>
-
-                  <p className="text-sm text-gray-700">
-                    {step}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
