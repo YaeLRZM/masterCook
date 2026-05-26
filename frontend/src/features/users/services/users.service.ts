@@ -87,3 +87,10 @@ export async function createAdmin(payload: {
   );
   return data;
 }
+
+export async function toggleAdminStatus(userId: number): Promise<Admin> {
+  const { data } = await api.patch<BackendAdministrador>(
+    `/usuarios/${userId}`
+  );
+  return adapt(data);
+}

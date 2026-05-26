@@ -7,6 +7,7 @@ import PageHeader from "@/components/common/PageHeader";
 import {
   createAdmin,
   getAdmins,
+  toggleAdminStatus,
 } from "@/features/users/services/users.service";
 
 import { getCompanies } from "@/features/companies/services/companies.service";
@@ -138,6 +139,19 @@ export default function UsersPage() {
           ? detail.map((d: any) => `${d.loc?.join(".")}: ${d.msg}`).join("\n")
           : JSON.stringify(detail);
       alert(message);
+    }
+  };
+
+  const handleToggleStatus = async (userId: number, currentStatus: string) => {
+    try {
+      const action = currentStatus === "ACTIVE" ? "suspender" : "activar";
+      if (confirm(`¿Deseas ${action} este administrador?`)) {
+        await toggleAdminStatus(userId);
+        await loadData();
+      }
+    } catch (error: any) {
+      console.error(error);
+      alert("Error al cambiar el estado del administrador");
     }
   };
 
@@ -341,6 +355,10 @@ export default function UsersPage() {
                 <TableHead>
                   Estado
                 </TableHead>
+
+                <TableHead>
+                  Acciones
+                </TableHead>
               </TableRow>
             </TableHeader>
 
@@ -381,8 +399,31 @@ export default function UsersPage() {
                           : "destructive"
                       }
                     >
-                      {user.status}
+                      {user.status === "ACTIVE"
+                        ? "Activo"
+                        : "Inactivo"}
                     </Badge>
+                  </TableCell>
+
+                  <TableCell>
+                    <Button
+                      size="sm"
+                      variant={
+                        user.status === "ACTIVE"
+                          ? "destructive"
+                          : "default"
+                      }
+                      onClick={() =>
+                        handleToggleStatus(
+                          user.id,
+                          user.status
+                        )
+                      }
+                    >
+                      {user.status === "ACTIVE"
+                        ? "Suspender"
+                        : "Activar"}
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))}
@@ -390,7 +431,7 @@ export default function UsersPage() {
               {filteredUsers.length === 0 && (
                 <TableRow>
                   <TableCell
-                    colSpan={6}
+                    colSpan={7}
                     className="py-8 text-center text-gray-500"
                   >
                     No hay administradores encontrados.
