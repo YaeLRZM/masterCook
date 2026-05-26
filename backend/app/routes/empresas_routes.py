@@ -258,3 +258,31 @@ def crear_admin_de_empresa(
     db.commit()
     db.refresh(usuario)
     return usuario
+
+
+@router.patch(
+    "/administradores/{usuario_id}/toggle-status",
+    response_model=UsuarioSalida,
+)
+def toggle_admin_status(
+    usuario_id: int,
+    db: Session = Depends(get_db),
+    _=Depends(requiere_roles(["SUPER_ADMIN"])),
+):
+    """Activa o suspende un administrador (solo SUPER_ADMIN)."""
+    usuario = db.execute(
+        select(Usuario).where(Usuario.id == usuario_id)
+    ).scalar_one_or_none()
+    if usuario is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Usuario no encontrado",
+        )
+
+    usuario.activo = not usuario.activo
+    usuario.estatus = "ACTIVO" if usuario.activo else "INACTIVO"
+
+    db.add(usuario)
+    db.commit()
+    db.refresh(usuario)
+    return usuario
