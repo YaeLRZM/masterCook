@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Eye, EyeOff } from "lucide-react";
 
 import { signIn } from "@/features/auth/services/auth.service";
 import { useAuthStore } from "@/features/auth/store/auth.store";
@@ -15,6 +16,7 @@ export default function SignInPage() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   const [loading, setLoading] = useState(false);
 
@@ -109,7 +111,7 @@ export default function SignInPage() {
 
               <input
                 className="w-full rounded-xl border border-gray-200 bg-gray-50 p-3 outline-none transition focus:border-blue-500"
-                placeholder="admin@test.com"
+                placeholder="tu@email.com"
                 value={email}
                 onChange={(e) =>
                   setEmail(e.target.value)
@@ -119,20 +121,33 @@ export default function SignInPage() {
 
             <div>
               <label className="mb-2 block text-sm font-medium">
-                Password
+                Contraseña
               </label>
 
-              <input
-                type="password"
-                className="w-full rounded-xl border border-gray-200 bg-gray-50 p-3 outline-none transition focus:border-blue-500"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) =>
-                  setPassword(
-                    e.target.value
-                  )
-                }
-              />
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  className="w-full rounded-xl border border-gray-200 bg-gray-50 p-3 pr-10 outline-none transition focus:border-blue-500"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) =>
+                    setPassword(
+                      e.target.value
+                    )
+                  }
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition"
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-5 w-5" />
+                  ) : (
+                    <Eye className="h-5 w-5" />
+                  )}
+                </button>
+              </div>
             </div>
 
             <button
@@ -141,8 +156,8 @@ export default function SignInPage() {
               className="w-full rounded-xl bg-blue-600 p-3 font-medium text-white transition hover:bg-blue-700"
             >
               {loading
-                ? "Loading..."
-                : "Sign In"}
+                ? "Iniciando sesión..."
+                : "Iniciar sesión"}
             </button>
 
             <p className="mt-2 text-sm text-gray-500">
