@@ -43,7 +43,11 @@ def listar_empresas(
     db: Session = Depends(get_db),
     _=Depends(requiere_roles(["SUPER_ADMIN"])),
 ):
-    return db.execute(select(Empresa)).scalars().all()
+    return db.execute(
+        select(Empresa).where(
+            Empresa.nombre != "MasterCook Admin"
+        )
+    ).scalars().all()
 
 
 @router.get(
