@@ -367,21 +367,18 @@ export default function RecetasPage() {
               key={receta.id}
               className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm hover:shadow-lg transition-shadow"
             >
-              <div className="h-44 bg-gradient-to-br from-orange-100 to-orange-50 flex items-center justify-center overflow-hidden relative">
+              <div className="relative h-44 bg-gradient-to-br from-orange-100 to-orange-50 flex items-center justify-center overflow-hidden">
                 {receta.imagen_url ? (
                   <img
                     src={receta.imagen_url}
                     alt={receta.nombre}
                     className="h-full w-full object-cover"
                     onError={(e) => {
-                      (e.target as HTMLImageElement).style.display = "none";
-                      (e.currentTarget.parentElement?.querySelector(".fallback-icon") as HTMLElement).style.display = "flex";
+                      e.currentTarget.style.display = "none";
                     }}
                   />
                 ) : null}
-                <div className="fallback-icon flex items-center justify-center h-full w-full absolute">
-                  <ChefHat className="h-16 w-16 text-orange-300" />
-                </div>
+                <ChefHat className="h-16 w-16 text-orange-300" />
               </div>
 
               <div className="p-5 space-y-4">
@@ -417,15 +414,17 @@ export default function RecetasPage() {
                     Ver Detalle
                   </Link>
                   <button
+                    type="button"
                     onClick={() => handleEditar(receta)}
-                    className="flex-1 rounded-lg bg-orange-100 py-2 text-sm font-medium text-orange-600 hover:bg-orange-200 transition-colors"
+                    className="flex-1 rounded-lg bg-orange-100 py-2 px-3 text-sm font-medium text-orange-600 hover:bg-orange-200 transition-colors cursor-pointer"
                   >
                     <Edit2 className="h-4 w-4 inline mr-1" />
                     Editar
                   </button>
                   <button
+                    type="button"
                     onClick={() => handleEliminar(receta.id)}
-                    className="rounded-lg bg-red-100 px-3 py-2 text-red-600 hover:bg-red-200 transition-colors"
+                    className="rounded-lg bg-red-100 px-3 py-2 text-red-600 hover:bg-red-200 transition-colors cursor-pointer"
                     title="Eliminar"
                   >
                     <Trash2 className="h-4 w-4" />
