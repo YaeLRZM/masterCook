@@ -16,6 +16,10 @@ import {
   type Ingrediente,
 } from "@/features/chef/services/ingredientes.service";
 import {
+  getUnidadesMedida,
+  type UnidadMedida,
+} from "@/features/chef/services/unidades.service";
+import {
   Dialog,
   DialogContent,
   DialogHeader,
@@ -27,6 +31,7 @@ import { Button } from "@/components/ui/button";
 
 export default function IngredientesPage() {
   const [ingredientes, setIngredientes] = useState<Ingrediente[]>([]);
+  const [unidades, setUnidades] = useState<UnidadMedida[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({
@@ -46,10 +51,14 @@ export default function IngredientesPage() {
 
   const cargarIngredientes = async () => {
     try {
-      const datos = await getIngredientes();
+      const [datos, unidadesData] = await Promise.all([
+        getIngredientes(),
+        getUnidadesMedida(),
+      ]);
       setIngredientes(datos);
+      setUnidades(unidadesData);
     } catch (error) {
-      console.error("Error cargando ingredientes:", error);
+      console.error("Error cargando datos:", error);
     } finally {
       setLoading(false);
     }
@@ -150,14 +159,19 @@ export default function IngredientesPage() {
                 </div>
                 <div>
                   <label className="text-sm font-medium">Unidad de Medida</label>
-                  <Input
-                    type="number"
-                    placeholder="ID de unidad"
+                  <select
+                    className="w-full border rounded-lg p-2 text-sm"
                     value={form.unidad_medida_id}
                     onChange={(e) =>
                       setForm({ ...form, unidad_medida_id: parseInt(e.target.value) || 1 })
                     }
-                  />
+                  >
+                    {unidades.map((u) => (
+                      <option key={u.id} value={u.id}>
+                        {u.nombre} ({u.abreviatura})
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
 

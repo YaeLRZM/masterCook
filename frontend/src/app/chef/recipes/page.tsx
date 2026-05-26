@@ -6,6 +6,7 @@ import PageHeader from "@/components/common/PageHeader";
 import { Plus, ChefHat, Edit2, Trash2, X } from "lucide-react";
 import { getRecetas, deleteReceta, createReceta, type Receta } from "@/features/chef/services/recetas.service";
 import { getIngredientes, type Ingrediente } from "@/features/chef/services/ingredientes.service";
+import { getUnidadesMedida, type UnidadMedida } from "@/features/chef/services/unidades.service";
 import {
   Dialog,
   DialogContent,
@@ -19,6 +20,7 @@ import { Button } from "@/components/ui/button";
 export default function RecetasPage() {
   const [recetas, setRecetas] = useState<Receta[]>([]);
   const [ingredientes, setIngredientes] = useState<Ingrediente[]>([]);
+  const [unidades, setUnidades] = useState<UnidadMedida[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({
@@ -44,12 +46,14 @@ export default function RecetasPage() {
 
   const cargarDatos = async () => {
     try {
-      const [recetasData, ingredientesData] = await Promise.all([
+      const [recetasData, ingredientesData, unidadesData] = await Promise.all([
         getRecetas(),
         getIngredientes(),
+        getUnidadesMedida(),
       ]);
       setRecetas(recetasData);
       setIngredientes(ingredientesData);
+      setUnidades(unidadesData);
     } catch (error) {
       console.error("Error cargando datos:", error);
     } finally {
@@ -228,9 +232,8 @@ export default function RecetasPage() {
                       <label className="text-xs font-medium text-gray-600">
                         Unidad
                       </label>
-                      <Input
-                        type="number"
-                        placeholder="ID unidad"
+                      <select
+                        className="w-full border rounded p-2 text-sm"
                         value={nuevoIngrediente.unidad_medida_id}
                         onChange={(e) =>
                           setNuevoIngrediente({
@@ -238,7 +241,13 @@ export default function RecetasPage() {
                             unidad_medida_id: parseInt(e.target.value) || 1,
                           })
                         }
-                      />
+                      >
+                        {unidades.map((u) => (
+                          <option key={u.id} value={u.id}>
+                            {u.nombre} ({u.abreviatura})
+                          </option>
+                        ))}
+                      </select>
                     </div>
 
                     <div>
