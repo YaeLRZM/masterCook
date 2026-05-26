@@ -1,12 +1,26 @@
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.core.config import CORS_ORIGINS
 from app.database.database import engine
 from app.database.base import Base
+
+
+class CORSHeadersMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        origin = request.headers.get("origin")
+        if origin in CORS_ORIGINS:
+            response = await call_next(request)
+            response.headers["Access-Control-Allow-Origin"] = origin
+            response.headers["Access-Control-Allow-Credentials"] = "true"
+            response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+            response.headers["Access-Control-Allow-Headers"] = request.headers.get("access-control-request-headers", "*")
+            return response
+        return await call_next(request)
 
 from app.routes.auth_routes import router as auth_router
 from app.routes.empresas_routes import router as empresas_router
@@ -20,6 +34,7 @@ from app.routes.cotizaciones_routes import router as cotizaciones_router
 
 app = FastAPI(title="MasterCook API", version="1.0.0")
 
+app.add_middleware(CORSHeadersMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=CORS_ORIGINS,
