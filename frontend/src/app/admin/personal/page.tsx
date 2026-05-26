@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Plus, Search } from "lucide-react";
+import { Plus, Search, Eye, EyeOff } from "lucide-react";
 import { getPersonal, createPersonal, disablePersonal, getAssignableRoles } from "@/features/personal/services/personal.service";
 import { useAuthStore } from "@/features/auth/store/auth.store";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -32,6 +32,7 @@ export default function PersonalPage() {
   const [staff, setStaff] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [roles, setRoles] = useState<any[]>([]);
   const [form, setForm] = useState({
     nombre_login: "",
@@ -198,14 +199,27 @@ export default function PersonalPage() {
                 }
               />
 
-              <Input
-                placeholder="Contraseña"
-                type="password"
-                value={form.password}
-                onChange={(e) =>
-                  setForm({ ...form, password: e.target.value })
-                }
-              />
+              <div className="relative">
+                <Input
+                  placeholder="Contraseña"
+                  type={showPassword ? "text" : "password"}
+                  value={form.password}
+                  onChange={(e) =>
+                    setForm({ ...form, password: e.target.value })
+                  }
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
+              </div>
 
               <div>
                 <label className="text-sm font-medium mb-2 block">Rol</label>
