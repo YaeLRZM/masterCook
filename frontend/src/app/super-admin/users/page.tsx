@@ -40,6 +40,8 @@ import {
 import {
   Plus,
   Search,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 
 function roleColor(role: string) {
@@ -72,6 +74,8 @@ export default function UsersPage() {
 
   const [open, setOpen] =
     useState(false);
+
+  const [showPassword, setShowPassword] = useState(false);
 
   const [form, setForm] = useState({
     name: "",
@@ -255,17 +259,31 @@ export default function UsersPage() {
                 ))}
               </select>
 
-              <Input
-                placeholder="Password"
-                type="password"
-                value={form.password}
-                onChange={(e) =>
-                  setForm({
-                    ...form,
-                    password: e.target.value,
-                  })
-                }
-              />
+              <div className="relative">
+                <Input
+                  placeholder="Contraseña"
+                  type={showPassword ? "text" : "password"}
+                  value={form.password}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      password: e.target.value,
+                    })
+                  }
+                  className="pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition"
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-5 w-5" />
+                  ) : (
+                    <Eye className="h-5 w-5" />
+                  )}
+                </button>
+              </div>
 
               <Button
                 className="w-full"
